@@ -17,28 +17,26 @@ Timelock-encrypted sealed voting for Arc: no running tally, no bandwagon, no los
 
 ## Description (≤ 300 words)
 
-ArcSeal is an MIT-licensed timelock-encryption primitive for Arc, plus a reference DAO built on it — a building
-block, not a SaaS.
+ArcSeal is an MIT-licensed timelock-encryption primitive for Arc, plus a reference DAO built on it.
 
 An abstract module, `Sealed.sol`, stores only a hash commitment and a drand round per sealed item; it never sees
 a ciphertext or a vote choice. A TypeScript SDK (`@arcseal/sdk`) seals data with tlock — identity-based encryption
-keyed to a future drand quicknet round — and unseals it once public. Nobody can open it early, not even the
-author; anyone can open it once the round arrives, with no relayer and no singleton contract.
+keyed to a future drand quicknet round. Nobody can open it early, not even the author; anyone can open it once the
+round arrives, with no relayer and no singleton contract.
 
-The reference app, `SealedDAO`, is a member-list DAO with a USDC treasury where every vote stays sealed until its
-voting round closes: no running tally, no bandwagon, no vote readable onchain while voting is open, and no vote
-lost just because a member never came back to reveal it. After the close round, anyone — the site has a button —
-decrypts every sealed vote in the browser and submits them in one `revealBatch` transaction. For a proposal that
-met quorum, the treasury pays a small fixed amount per revealed vote to cover that transaction's gas. Quorum
-counts sealed votes; passing counts revealed votes only. Every payout is pulled by its own recipient with
-`claim()`, never pushed, so a blocklisted address can never stall anyone else.
+The reference app, `SealedDAO`, is a member-list DAO with a USDC treasury where every vote stays sealed until
+voting closes: no running tally, no bandwagon, no vote readable onchain while voting is open, and no vote lost
+because a member never came back to reveal it. After the close, anyone — the site has a button — decrypts every
+vote in the browser and submits them in one `revealBatch`. For a proposal that met quorum, the treasury pays a
+small fixed amount per revealed vote to cover that gas. Every payout is pulled with `claim()`, never pushed, so a
+blocklisted address can never stall anyone else.
 
-Secrecy holds only during voting: from the close round on, anyone can decrypt every sealed vote, and after a
-reveal each vote is public per address, permanently. This is not anonymity, and the site says so plainly.
+Secrecy holds only during voting: after the reveal, each vote is public per address, permanently. This is not
+anonymity, and the site says so plainly. No token, no sale, no yield, no prize, no chance.
 
-No token, no sale, no yield, no prize, no chance. Membership changes and treasury transfers happen only through
-approved proposals — ArcSeal stays a governance and treasury primitive, never a game of chance or custody of
-someone else's savings.
+Status: live on Arc mainnet since 2026-09-18 (`SealedDAO` `0x789f7689efb75a1696c5a25d5ae97ac2cf6a2c44`, Sourcify
+exact match). The three demo proofs are proposed, sealed and revealed onchain; finalize and execute follow when the
+24 h reveal window ends on 2026-09-19 14:08 UTC.
 
 ## How Arc is used
 
