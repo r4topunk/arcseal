@@ -6,7 +6,8 @@ author already has ArcDraw (48845), MemoKit (48844) and ArcPull (48843) under re
 
 ## For the operator session (read this first)
 
-State on 2026-09-18 ~16:00 UTC: **not submitted yet.** Everything the form needs is below. Mainnet status is in
+**Submitted on 2026-09-18: https://dorahacks.io/buidl/48963** (under review, editable before judging). What was
+pasted is below. Mainnet status is in
 [README.md](README.md#mainnet-proof) and `deployments/arc-mainnet.json`.
 
 Rules:
@@ -163,9 +164,9 @@ Next milestones:
 
 ## Step 3: Team
 
-Solo builder, same as the other three BUIDLs. Team description, copied from the ArcPull BUIDL and updated:
+Solo builder. Team description (pseudonym only, the owner's choice):
 
-> Team r4to: Gustavo Kuhl (r4to), solo builder. Researcher and builder working on AI agents and Web3. GitHub
+> r4to (r4topunk), solo builder. Researcher and builder working on AI agents and Web3. GitHub
 > https://github.com/r4topunk, X and Farcaster @r4topunk. Designed, built, tested and deployed ArcDraw, ArcPull,
 > MemoKit and ArcSeal on Arc mainnet.
 
@@ -196,7 +197,8 @@ finalizes all three proofs, executes 1 and 2, and claims WALLET_C's 1 USDC; it a
 2. Same values in the README proof table, `docs/GAS.md` (finalize / execute rows), and the proof tracker in
    `site/index.html` (EN and PT-BR dictionaries).
 3. `pnpm check`, commit, push.
-4. On DoraHacks: open the BUIDL → **Edit** → replace the Details block with the updated one → save.
+4. On DoraHacks: open https://dorahacks.io/buidl/48963 → **Edit** → replace rows 16–21 (they read "Pending: runs after
+   the reveal window ends (2026-09-19 14:08 UTC)") and the status paragraph → save, with the owner's OK.
 
 ## Demo video script (2:00, optional)
 
@@ -214,6 +216,6 @@ finalizes all three proofs, executes 1 and 2, and claims WALLET_C's 1 USDC; it a
 - [x] Contract deployed and Sourcify-verified (exact match)
 - [x] Public repo pushed, project page and app live
 - [x] Proofs proposed, sealed and revealed on mainnet (0 votes lost)
-- [ ] BUIDL submitted (owner's OK before the final click)
+- [x] BUIDL submitted: https://dorahacks.io/buidl/48963
 - [ ] Proofs finalized, executed, claimed (after 2026-09-19 14:08 UTC)
 - [ ] Details block, README, `docs/GAS.md` and site tracker updated with rows 16–21; BUIDL edited

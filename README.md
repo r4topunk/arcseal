@@ -21,6 +21,7 @@ sharing their receipt; see [Not provided](#not-provided).)
 |---|---|
 | Contract | `SealedDAO` at [`0x789f7689efb75a1696c5a25d5ae97ac2cf6a2c44`](https://explorer.arc.io/address/0x789f7689efb75a1696c5a25d5ae97ac2cf6a2c44) · [Sourcify exact match](https://repo.sourcify.dev/5042/0x789f7689eFb75a1696C5A25d5aE97Ac2cF6A2c44) · [deployments/arc-mainnet.json](deployments/arc-mainnet.json) |
 | Project page | https://r4topunk.github.io/arcseal/ |
+| DoraHacks BUIDL | https://dorahacks.io/buidl/48963 (Arc Microgrants, under review) |
 | App | https://r4topunk.github.io/arcseal/app/proposals/ (reads the mainnet DAO; any wallet can reveal, finalize, execute or claim; only members can propose and vote) |
 | Chain | Arc mainnet, chainId 5042, USDC `0x3600000000000000000000000000000000000000` (ERC-20 view, 6 decimals) |
 
