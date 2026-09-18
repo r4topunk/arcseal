@@ -4,432 +4,1044 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title id="doc-title">ArcSeal: sealed voting on Arc</title>
-<meta id="doc-desc" name="description" content="Timelock-encrypted sealed voting on Arc. Votes stay sealed until the round closes; after that, anyone can reveal them.">
+<meta id="doc-desc" name="description" content="Timelock-encrypted sealed voting on Arc. Every vote stays sealed until the drand round closes; after that, anyone can reveal them all.">
 <meta property="og:title" content="ArcSeal: sealed voting on Arc">
-<meta property="og:description" content="Timelock-encrypted sealed voting on Arc. Votes stay sealed until the round closes; after that, anyone can reveal them.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232F6BAE'/><text x='16' y='22' font-family='system-ui' font-size='17' font-weight='700' fill='white' text-anchor='middle'>A</text></svg>">
+<meta property="og:description" content="Timelock-encrypted sealed voting on Arc. Every vote stays sealed until the drand round closes; after that, anyone can reveal them all.">
+<meta name="theme-color" content="#F3EEE4">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='15' fill='%238C2A1E'/><path d='M10 21 L16 9 L22 21 M12.5 17 H19.5' fill='none' stroke='%23FBF7EF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
 <style>
 :root{
   color-scheme:light;
-  --bg:#FFFFFF; --raised:#FFFFFF; --sunk:#F2F4F7; --line:#DDE2E9; --line-soft:#EBEEF2;
-  --ink:#121826; --muted:#555F6D; --faint:#8A93A0;
-  --accent:#2F6BAE; --accent-soft:#E3ECF6; --on-accent:#FFFFFF;
-  --ok:#23734A; --warn:#94560F; --bad:#AE3D36;
-  --shadow:0 1px 2px rgba(20,40,70,.05),0 12px 32px -16px rgba(20,40,70,.18);
+  --paper:#F3EEE4; --card:#FBF7EF; --card-2:#F7F2E8; --tint:#EDE6D8;
+  --ink:#1C1813; --muted:#5B5449; --faint:#6F665A; --ghost:#A89E8C;
+  --line:#DCD3C3; --line-soft:#E6DECF;
+  --wax:#8C2A1E; --wax-ink:#FBF7EF; --wax-soft:#F5E9E2;
+  --night:#1C1813; --night-line:#3A342B; --night-muted:#B5AC9C; --gold:#C9A27A;
+  --serif:"Instrument Serif",Georgia,"Times New Roman",serif;
   --sans:"Geist",ui-sans-serif,system-ui,-apple-system,sans-serif;
   --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
-  --r-lg:14px; --r-md:8px; --r-sm:4px;
+  --gutter:clamp(16px,5vw,96px);
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;padding-inline:16px}
-.wrap{max-width:1040px;margin:0 auto}
-h1,h2,h3{line-height:1.05;text-wrap:balance;margin:0;font-weight:600;letter-spacing:-.03em}
-p{margin:0;text-wrap:pretty}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,p{margin:0}
+h1,h2{font-family:var(--serif);font-weight:400;letter-spacing:-.03em;text-wrap:balance}
+h2{font-size:clamp(44px,6vw,72px);line-height:1}
+em{font-style:italic}
+p{text-wrap:pretty}
 a{color:inherit}
-button,a{transition:background-color .2s ease,border-color .2s ease,color .2s ease,transform .12s ease}
-button{font:inherit;cursor:pointer}
-button:active:not(:disabled){transform:translateY(1px)}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:8px 12px;border-radius:var(--r-sm)}
-.skip:focus{left:16px;z-index:10}
-.label{font-size:13px;color:var(--muted);font-weight:500}
-code{font-family:var(--mono);font-size:.92em;background:var(--sunk);padding:.05em .35em;border-radius:4px}
+button{font:inherit;color:inherit;cursor:pointer}
+code,.mono{font-family:var(--mono)}
+:focus-visible{outline:2px solid var(--wax);outline-offset:3px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:var(--paper);padding:8px 12px;border-radius:6px;z-index:20}
+.skip:focus{left:16px}
+.wrap{max-width:1440px;margin:0 auto;padding-inline:var(--gutter)}
+.eyebrow{font-family:var(--mono);font-size:13px;color:var(--wax);letter-spacing:.04em;text-transform:uppercase}
+.lede{font-size:18px;color:var(--muted);line-height:1.6}
+.sec{padding-top:clamp(88px,10vw,144px)}
+.sec-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:64px;align-items:end;margin-bottom:clamp(32px,4vw,56px)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border-radius:999px;font-size:16px;font-weight:500;text-decoration:none;border:1px solid var(--ink);background:transparent;transition:background-color .2s,color .2s,border-color .2s}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn.wax{background:var(--wax);border-color:var(--wax);color:var(--wax-ink)}
+.btn.wax:hover{background:var(--ink);border-color:var(--ink)}
+.btn.ink{background:var(--ink);color:var(--paper)}
+.btn.ink:hover{background:var(--wax);border-color:var(--wax)}
 
-/* top bar */
-.top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-block:20px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
-.brand{font-weight:600;letter-spacing:-.01em;text-decoration:none}
-.brand span{color:var(--faint);font-weight:400;margin-left:8px;font-size:14px}
-.top nav{display:flex;gap:20px;font-size:14px;align-items:center;flex-wrap:wrap}
-.top nav a{color:var(--muted);text-decoration:none}
-.top nav a:hover{color:var(--ink)}
-.langs{display:inline-flex;padding:3px;background:var(--sunk);border-radius:var(--r-md);gap:2px}
-.langs button{border:0;background:transparent;color:var(--muted);padding:6px 11px;font-size:13px;border-radius:6px;font-weight:500}
-.langs button:hover{color:var(--ink)}
-.langs button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(20,40,70,.12)}
+/* header */
+.top{display:flex;justify-content:space-between;align-items:center;gap:24px;padding-block:24px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-family:var(--serif);font-size:26px;letter-spacing:-.01em}
+.top nav{display:flex;gap:28px;align-items:center;font-size:14px}
+.top nav a:not(.btn){text-decoration:none;color:var(--muted)}
+.top nav a:not(.btn):hover{color:var(--wax)}
+.top .btn{min-height:44px;padding:0 20px;font-size:14px}
+.langs{display:inline-flex;padding:3px;background:var(--tint);border-radius:999px;gap:2px}
+.langs button{border:0;background:transparent;color:var(--muted);padding:6px 11px;font-size:12px;border-radius:999px;font-family:var(--mono)}
+.langs button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(60,40,20,.15)}
 
 /* hero */
-.hero{padding-block:72px 64px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:start}
-.kicker{font-family:var(--mono);font-size:12px;color:var(--accent)}
-.hero h1{font-size:clamp(46px,7.5vw,84px);letter-spacing:-.045em;margin-top:10px;line-height:.95}
-.hero .tag{font-size:21px;color:var(--muted);margin-top:16px;max-width:26ch;line-height:1.3}
-.cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
-.hero dl{margin:0;display:grid;gap:22px;padding-top:34px}
-.hero dt{font-weight:600;font-size:14px}
-.hero dd{margin:4px 0 0;color:var(--muted);max-width:52ch}
-.hero dd b{color:var(--ink);font-weight:600}
+.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:64px;padding-block:clamp(64px,8vw,104px) clamp(56px,7vw,96px);align-items:center}
+.hero-copy{display:flex;flex-direction:column;gap:32px}
+.hero h1{font-size:clamp(58px,8.4vw,112px);line-height:.92;letter-spacing:-.035em}
+.hero h1 em{color:var(--wax)}
+.hero .lede{font-size:clamp(18px,1.6vw,21px);max-width:34em}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.hero-art{position:relative;height:520px;display:flex;justify-content:center;align-items:center}
+.letter{position:absolute;width:420px;max-width:88%;height:290px;background:var(--card);border:1px solid var(--line);border-radius:6px;transform:rotate(-4deg);box-shadow:0 30px 60px -30px rgba(60,40,20,.35);display:flex;flex-direction:column;justify-content:space-between;padding:28px}
+.letter .row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--faint)}
+.letter .ct{font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--ghost);word-break:break-all}
+.seal{position:relative;transform:translate(120px,90px);filter:drop-shadow(0 18px 24px rgba(90,20,10,.35));animation:press 1.1s cubic-bezier(.2,.9,.25,1.2) .3s both}
+@keyframes press{from{transform:translate(120px,50px) scale(1.25);opacity:0}to{transform:translate(120px,90px) scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.seal{animation:none}}
 
-.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:transparent;color:var(--ink);padding:9px 14px;border-radius:var(--r-md);font-size:14px;font-weight:500;text-decoration:none}
-.btn:hover:not(:disabled){border-color:var(--ink);background:var(--sunk)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.btn.primary:hover:not(:disabled){background:var(--ink);border-color:var(--ink);color:#fff}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--ink);border-bottom:1px solid var(--line)}
+.stats>div{padding:28px;border-right:1px solid var(--line)}
+.stats>div:first-child{padding-left:0}
+.stats>div:last-child{border-right:0}
+.stats b{display:block;font-family:var(--serif);font-weight:400;font-size:44px;line-height:1.1}
+.stats span{font-size:14px;color:var(--muted)}
 
-/* section heads */
-.sec{padding-block:56px;border-top:1px solid var(--ink);scroll-margin-top:16px}
-.sec-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:40px;margin-bottom:28px;align-items:end}
-.sec-head h2{font-size:clamp(28px,4vw,38px)}
-.sec-head p{color:var(--muted);max-width:52ch}
+/* why */
+.versus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.panel{border-radius:10px;padding:36px;display:flex;flex-direction:column;gap:24px}
+.panel.light{background:var(--card);border:1px solid var(--line)}
+.panel.dark{background:var(--night);color:var(--paper)}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.panel-head h3{font-family:var(--serif);font-weight:400;font-size:32px;line-height:1.1}
+.panel-head span{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.04em}
+.panel.dark .panel-head span{color:var(--gold)}
+.vrow{display:grid;grid-template-columns:36px 150px minmax(0,1fr) 56px;gap:16px;align-items:center;padding:14px 0;border-top:1px solid var(--line-soft)}
+.panel.dark .vrow{border-top-color:var(--night-line)}
+.vrow .t{font-family:var(--mono);font-size:12px;color:var(--faint)}
+.vrow .who{font-size:15px;font-weight:500;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.vrow .score{font-family:var(--mono);font-size:13px;text-align:right}
+.panel.dark .vrow .score{color:var(--night-muted)}
+.bar{display:flex;height:14px;border-radius:3px;overflow:hidden;background:var(--tint)}
+.bar .f{background:var(--wax)} .bar .a{background:var(--ink)}
+.bar.hatch{background:repeating-linear-gradient(135deg,#2A241D 0 6px,#332C23 6px 12px)}
+.vrow.final{border-top-color:var(--gold)}
+.vrow.final .t,.vrow.final .who{color:var(--gold)}
+.vrow.final .bar .a{background:var(--paper)}
+.vrow.final .score{color:var(--paper)}
+.for{color:var(--wax)}
+.panel-note{font-size:15px;line-height:1.5;color:var(--muted);display:flex;gap:12px;align-items:flex-start}
+.panel.dark .panel-note{color:var(--night-muted)}
+.panel-note svg{flex:none;margin-top:2px}
 
-/* envelope + diagram */
-.how-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:24px;margin-bottom:32px}
-.envelope{background:var(--raised);border-radius:var(--r-lg);box-shadow:var(--shadow);outline:1px solid var(--line-soft);padding:24px}
-.envelope .icon{width:44px;height:44px;border-radius:var(--r-md);background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;margin-bottom:16px}
-.envelope h3{font-size:17px;margin-bottom:10px}
-.envelope p{color:var(--muted);font-size:15px}
-.env-steps{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:10px}
-.env-steps li{font-size:13px;color:var(--muted);display:flex;gap:10px;align-items:baseline}
-.env-steps b{color:var(--ink);font-family:var(--mono);font-size:12px;flex:none;width:1.4em}
-.diagram-wrap{background:var(--sunk);border-radius:var(--r-lg);padding:20px;overflow-x:auto;display:flex;align-items:center}
-.diagram{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre;line-height:1.7;margin:0}
-.diagram b{color:var(--ink);font-weight:600}
+/* simulator */
+.sim-head{display:flex;justify-content:space-between;align-items:end;gap:32px;margin-bottom:40px}
+.sim-head .titles{display:flex;flex-direction:column;gap:16px}
+.controls{display:flex;gap:8px;flex:none}
+.circle{width:48px;height:48px;border-radius:999px;border:1px solid var(--ink);background:transparent;font-size:18px;display:grid;place-items:center}
+.circle:hover{background:var(--ink);color:var(--paper)}
+.play{height:48px;padding:0 22px;border-radius:999px;border:0;background:var(--ink);color:var(--paper);font-size:15px;font-weight:500;min-width:112px}
+.play:hover{background:var(--wax)}
+.sim{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 40px 80px -50px rgba(60,40,20,.35)}
+.tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-bottom:1px solid var(--line)}
+.tab{position:relative;text-align:left;background:var(--card);border:0;border-right:1px solid var(--line);padding:20px 24px 22px;display:flex;flex-direction:column;gap:6px;transition:background-color .3s}
+.tab:last-child{border-right:0}
+.tab .n{font-family:var(--serif);font-style:italic;font-size:22px;line-height:1;color:var(--ghost);transition:color .3s}
+.tab .l{font-size:16px;font-weight:600;opacity:.5;transition:opacity .3s}
+.tab .p{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--wax)}
+.tab.done .n,.tab.on .n{color:var(--wax)}
+.tab.done .l,.tab.on .l{opacity:1}
+.tab.done .p{width:100%}
+.tab.on{background:var(--paper)}
+.stage{display:grid;grid-template-columns:300px minmax(0,1fr) 300px;min-height:560px}
+.col{padding:32px;display:flex;flex-direction:column;gap:16px}
+.col-l{border-right:1px solid var(--line-soft)}
+.col-m{background:var(--card-2)}
+.col-r{border-left:1px solid var(--line-soft);gap:20px}
+.lbl{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between;gap:12px}
+.member{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--line-soft);border-radius:8px;background:var(--card-2)}
+.avatar{width:40px;height:40px;border-radius:50%;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-family:var(--serif);font-size:22px;flex:none}
+.member .nm{display:flex;flex-direction:column;gap:2px;flex-grow:1;min-width:0}
+.member .nm b{font-size:15px;font-weight:600;white-space:nowrap}
+.member .nm small{font-size:12px;color:var(--faint)}
+.chip{font-family:var(--mono);font-size:11px;font-weight:500;padding:5px 9px;border-radius:4px;background:var(--tint);color:var(--faint);white-space:nowrap;transition:background-color .4s,color .4s}
+.chip.sealed,.chip.for{background:var(--wax);color:var(--wax-ink)}
+.chip.against{background:var(--ink);color:var(--paper)}
+.revealer{display:flex;align-items:center;gap:14px;padding:14px;border:1px dashed var(--wax);border-radius:8px;opacity:.25;transition:opacity .5s}
+.revealer.on{opacity:1}
+.revealer .avatar{background:transparent;border:1px solid var(--wax);color:var(--wax)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 20px}
+.proposal{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.proposal .t{display:flex;flex-direction:column;gap:4px}
+.proposal .t small{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.proposal .t b{font-family:var(--serif);font-weight:400;font-size:24px;line-height:1.1}
+.status{font-family:var(--mono);font-size:12px;padding:6px 10px;border-radius:4px;background:var(--tint);color:var(--muted);white-space:nowrap;transition:background-color .4s,color .4s}
+.status.dark{background:var(--ink);color:var(--paper)}
+.status.wax{background:var(--wax);color:var(--wax-ink)}
+.ledger{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:16px;align-items:center;opacity:.45;border-style:dashed;background:transparent;transition:opacity .5s,background-color .5s}
+.ledger.in{opacity:1;border-style:solid;background:var(--card)}
+.ledger .who{font-family:var(--mono);font-size:12px;color:var(--faint)}
+.ledger .lines{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ledger .lines span{font-family:var(--mono);font-size:12px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ledger .lines .c2{color:var(--ghost)}
+.ledger.open .lines .c2{color:var(--ink)}
+.tally{margin-top:auto;display:flex;flex-direction:column;gap:12px}
+.tally-bar{min-height:28px;border-radius:4px;overflow:hidden;display:flex;font-family:var(--mono);font-size:12px}
+.tally-bar.hidden{background:repeating-linear-gradient(135deg,var(--tint) 0 8px,#E4DCCB 8px 16px);align-items:center;justify-content:center;color:var(--faint);padding:4px 10px;text-align:center}
+.tally-bar .f{background:var(--wax);color:var(--wax-ink);display:flex;align-items:center;padding-left:12px;width:66.6%}
+.tally-bar .a{background:var(--ink);color:var(--paper);display:flex;align-items:center;padding-left:12px;width:33.4%}
+.dial{position:relative;width:200px;height:200px;align-self:center}
+.dial svg{display:block}
+.dial .arc{transition:stroke-dashoffset .9s ease}
+.dial .face{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center}
+.dial .face b{font-family:var(--serif);font-weight:400;font-size:30px;line-height:1}
+.dial .face small{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.key{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;border:1px solid var(--line-soft);color:var(--faint);font-size:13px;line-height:1.35;transition:all .5s}
+.key svg{flex:none}
+.key.on{border-color:var(--wax);background:var(--wax-soft);color:var(--wax)}
+.treasury{margin-top:auto;border-top:1px solid var(--line-soft);padding-top:18px;display:flex;flex-direction:column;gap:10px}
+.treasury b{font-family:var(--serif);font-weight:400;font-size:44px;line-height:1}
+.treasury p{font-size:13px;color:var(--muted);line-height:1.45}
+.caption{border-top:1px solid var(--line);padding:28px 32px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:center}
+.caption p{font-family:var(--serif);font-size:30px;line-height:1.2;letter-spacing:-.01em}
+.caption code{font-size:13px;color:var(--wax);background:var(--paper);padding:10px 14px;border-radius:6px;white-space:nowrap}
+.fine{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:16px}
 
-.tbl-wrap{overflow-x:auto}
-table{border-collapse:collapse;width:100%;min-width:560px;font-size:15px}
-th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
-thead th{font-size:13px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--line)}
-tbody th{font-weight:600;white-space:nowrap}
-td code,.mono{font-family:var(--mono);font-size:13px}
-td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* anatomy */
+.anatomy{display:grid;grid-template-columns:340px 170px minmax(0,1fr);align-items:center}
+.source{background:var(--night);color:var(--paper);border-radius:12px;padding:32px;display:flex;flex-direction:column;gap:24px}
+.source .lbl{color:var(--gold)}
+.field{display:flex;flex-direction:column;gap:10px}
+.field>span,.field .fh span{font-size:14px;color:var(--night-muted)}
+.fh{display:flex;justify-content:space-between;align-items:center}
+.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.choices button{min-height:44px;border-radius:6px;border:1px solid #5A5145;background:transparent;color:var(--paper);font-size:13px;font-weight:600;transition:all .25s}
+.choices button[aria-pressed="true"]{background:var(--wax);border-color:var(--wax)}
+.reroll{background:transparent;border:1px solid #5A5145;color:var(--paper);border-radius:999px;padding:0 14px;min-height:36px;font-size:12px}
+.salt{font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--gold);word-break:break-all}
+.source .who{font-family:var(--mono);font-size:12px;color:var(--night-muted)}
+.wires{display:block}
+.outputs{display:flex;flex-direction:column;gap:24px}
+.out{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px 24px;display:flex;flex-direction:column;gap:10px;min-height:136px}
+.out.local{background:transparent;border-style:dashed;border-color:var(--ghost)}
+.out .oh{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.out .oh b{font-size:17px;font-weight:600}
+.tag{font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;background:var(--wax);color:var(--wax-ink);white-space:nowrap}
+.out.local .tag{background:transparent;border:1px solid var(--ghost);color:var(--muted)}
+.out .val{font-family:var(--mono);font-size:13px;word-break:break-all;line-height:1.5;transition:color .3s}
+.out .val.ct{color:var(--ghost)}
+.out .val.flash{color:var(--wax)}
+.out small{font-size:13px;color:var(--faint)}
 
-/* voting steps */
-.steps{list-style:none;margin:28px 0 0;padding:0;counter-reset:step;display:grid;gap:0}
-.steps li{padding-block:16px;border-top:1px solid var(--line);display:grid;grid-template-columns:2.2em minmax(0,1fr);gap:14px}
-.steps li::before{counter-increment:step;content:counter(step);font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:600}
-.steps b{display:block;font-weight:600;margin-bottom:2px}
-.steps span{color:var(--muted);font-size:15px}
+/* guarantees */
+.night{background:var(--night);color:var(--paper);margin-top:clamp(88px,10vw,144px);padding-block:clamp(80px,9vw,120px)}
+.night .lede{color:var(--night-muted)}
+.night .eyebrow{color:var(--gold)}
+.g-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--night-line);border:1px solid var(--night-line);border-radius:10px;overflow:hidden}
+.g-grid>div{background:var(--night);padding:32px;display:flex;flex-direction:column;gap:14px}
+.g-grid h3{font-family:var(--serif);font-weight:400;font-size:28px;line-height:1.1}
+.g-grid p{font-size:15px;line-height:1.6;color:var(--night-muted)}
+.arc-list{margin-top:clamp(56px,6vw,80px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:64px}
+.arc-list h3{font-family:var(--serif);font-weight:400;font-size:44px;line-height:1;letter-spacing:-.02em}
+.arc-list dl{margin:0}
+.arc-list dl>div{display:grid;grid-template-columns:260px minmax(0,1fr);gap:24px;padding:18px 0;border-top:1px solid var(--night-line)}
+.arc-list dl>div:last-child{border-bottom:1px solid var(--night-line)}
+.arc-list dt{font-family:var(--mono);font-size:13px;color:var(--gold)}
+.arc-list dd{margin:0;font-size:15px;color:var(--night-muted);line-height:1.6}
+.arc-list code{color:var(--paper)}
 
-/* privacy panel */
-.privacy{background:var(--ink);color:#fff;border-radius:var(--r-lg);padding:32px;margin-top:40px}
-.privacy h3{font-size:22px;color:#fff;margin-bottom:16px}
-.privacy ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
-.privacy li{font-size:15px;color:#D7DCE4;padding-left:22px;position:relative}
-.privacy li::before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;border-radius:2px;background:var(--accent)}
-.privacy li b{color:#fff;font-weight:600}
+/* plainly */
+.plain{display:flex;flex-direction:column;gap:40px}
+.plain .big{font-family:var(--serif);font-size:clamp(34px,4.4vw,52px);line-height:1.1;letter-spacing:-.02em;max-width:22em}
+.plain .big span{color:var(--faint)}
+.band{display:grid;grid-template-columns:38% 4px minmax(0,1fr);min-height:72px;border-radius:8px;overflow:hidden}
+.band>div{display:flex;align-items:center;gap:12px;padding:12px 24px;font-size:17px;font-weight:600}
+.band .s{background:var(--wax);color:var(--wax-ink)}
+.band .m{background:var(--ink);padding:0}
+.band .o{background:var(--line-soft);justify-content:space-between}
+.band .o i{font-family:var(--serif);font-style:normal;font-weight:400;font-size:34px}
+.band-legend{display:grid;grid-template-columns:38% 4px minmax(0,1fr);font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px}
+.band-legend span:last-child{padding-left:8px}
+.fineprint{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 48px;list-style:none;margin:0;padding:0}
+.fineprint li{padding:20px 0;border-top:1px solid var(--line);font-size:15px;line-height:1.6;color:var(--muted)}
+.fineprint b{color:var(--ink);font-weight:600}
 
-.status{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:40px;margin-top:40px}
-.dot{font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;color:var(--warn)}
-.dot::before{content:"";width:8px;height:8px;border-radius:2px;background:currentColor}
-.addrs{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:6px;font-size:14px}
-.addrs li{display:flex;justify-content:space-between;gap:12px;color:var(--muted)}
-.addrs .tbd{font-family:var(--mono);font-size:13px;color:var(--faint)}
-.status p{color:var(--muted);margin-top:8px;max-width:44ch}
-.docs{list-style:none;margin:0;padding:0;display:grid;align-content:start;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 32px}
-.docs a{display:flex;justify-content:space-between;gap:12px;padding-block:11px;border-top:1px solid var(--line);text-decoration:none;font-size:15px}
-.docs a span{color:var(--faint);font-size:13px}
-.docs a:hover{color:var(--accent)}
-footer{padding-block:28px 56px;border-top:1px solid var(--line-soft);color:var(--faint);font-size:13px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+/* proof */
+.proof-head{display:flex;justify-content:space-between;align-items:end;gap:24px;border-bottom:1px solid var(--ink);padding-bottom:24px;margin-bottom:24px;flex-wrap:wrap}
+.proof-head .addr{font-family:var(--mono);font-size:14px;text-align:right;line-height:1.7}
+.proof-head .addr a{color:var(--muted)}
+.track{display:grid;grid-template-columns:360px repeat(5,minmax(0,1fr));align-items:center}
+.track.hd{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.06em;padding-bottom:8px}
+.track.row{padding:22px 0;border-top:1px solid var(--line)}
+.track .info{display:flex;flex-direction:column;gap:4px;padding-right:24px}
+.track .info small{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.track .info b{font-family:var(--serif);font-weight:400;font-size:26px;line-height:1.1}
+.track .info span{font-size:13px;color:var(--muted)}
+.track .info a{color:var(--wax)}
+.dot{display:flex;align-items:center}
+.dot i{width:22px;height:22px;border-radius:50%;flex:none;border:2px solid var(--ghost);display:grid;place-items:center;font-style:normal;font-size:12px;color:var(--wax-ink)}
+.dot.done i{background:var(--wax);border-color:var(--wax)}
+.dot.na i{border-color:var(--line)}
+.dot::after{content:"";height:2px;flex-grow:1;background:var(--line)}
+.dot.done::after{background:var(--wax)}
+.dot:last-child::after{background:transparent}
+.dot .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.built{margin-top:clamp(64px,7vw,96px);display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:48px}
+.parts{display:flex;flex-direction:column}
+.parts>div{display:grid;grid-template-columns:160px minmax(0,1fr) auto;gap:20px;padding:16px 0;border-top:1px solid var(--line);align-items:baseline}
+.parts>div:last-child{border-bottom:1px solid var(--line)}
+.parts b{font-family:var(--mono);font-size:14px;font-weight:500}
+.parts span{font-size:15px;color:var(--muted)}
+.parts em{font-style:normal;font-family:var(--mono);font-size:12px;color:var(--wax);white-space:nowrap}
+.docs{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-content:start}
+.docs a{display:flex;flex-direction:column;gap:2px;padding:14px 16px;border:1px solid var(--line);border-radius:8px;background:var(--card);text-decoration:none;transition:border-color .2s}
+.docs a:hover{border-color:var(--wax)}
+.docs a span:first-child{font-weight:500;font-size:15px}
+.docs a span:last-child{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.sub-h{font-family:var(--serif);font-weight:400;font-size:36px;line-height:1;letter-spacing:-.02em;margin-bottom:20px}
 
-@media (max-width:780px){
-  .hero,.sec-head,.how-grid,.status{grid-template-columns:minmax(0,1fr);gap:20px}
-  .hero{padding-block:44px 40px}
-  .hero dl{padding-top:8px}
-  .top nav{gap:14px}
-  .docs{grid-template-columns:minmax(0,1fr)}
-  .sec{padding-block:40px}
-  .steps li{grid-template-columns:1.6em minmax(0,1fr)}
+/* footer */
+.foot{margin-top:clamp(88px,10vw,128px);background:var(--wax);color:var(--wax-ink)}
+.foot .wrap{padding-block:clamp(64px,7vw,96px) 48px;display:flex;flex-direction:column;gap:64px}
+.foot-top{display:flex;justify-content:space-between;align-items:end;gap:32px;flex-wrap:wrap}
+.foot h2{font-size:clamp(56px,7vw,96px);line-height:.95;letter-spacing:-.035em}
+.foot .btn{border-color:var(--wax-ink);color:var(--wax-ink)}
+.foot .btn:hover{background:var(--wax-ink);color:var(--ink)}
+.foot .btn.solid{background:var(--wax-ink);color:var(--ink)}
+.foot .btn.solid:hover{background:var(--ink);color:var(--wax-ink);border-color:var(--ink)}
+.foot-bottom{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:#F0D9CC;border-top:1px solid rgba(251,247,239,.3);padding-top:24px}
+
+/* responsive */
+@media (max-width:1180px){
+  .top nav a.nl{display:none}
+  .stage{grid-template-columns:260px minmax(0,1fr)}
+  .col-r{grid-column:1 / -1;border-left:0;border-top:1px solid var(--line-soft);flex-direction:row;flex-wrap:wrap;align-items:center;gap:24px}
+  .col-r .lbl{width:100%}
+  .col-r .key{flex:1 1 220px}
+  .col-r .treasury{margin-top:0;border-top:0;padding-top:0;flex:1 1 220px}
+  .dial{align-self:auto}
+  .anatomy{grid-template-columns:300px 120px minmax(0,1fr)}
+  .track{grid-template-columns:280px repeat(5,minmax(0,1fr))}
 }
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+@media (max-width:960px){
+  .hero,.sec-head,.versus,.arc-list,.built{grid-template-columns:minmax(0,1fr)}
+  .sec-head{gap:20px}
+  .hero{gap:24px}
+  .hero-art{height:420px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stats>div{padding:22px 0!important;border-right:0}
+  .stats>div:nth-child(odd){padding-right:20px!important;border-right:1px solid var(--line)}
+  .stats>div:nth-child(even){padding-left:20px!important}
+  .stats>div:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .sim-head{flex-direction:column;align-items:flex-start}
+  .tabs{overflow-x:auto;grid-template-columns:repeat(5,minmax(150px,1fr));scrollbar-width:none}
+  .stage{grid-template-columns:minmax(0,1fr)}
+  .col-l{border-right:0;border-bottom:1px solid var(--line-soft);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .col-l .lbl{grid-column:1 / -1}
+  .caption{grid-template-columns:minmax(0,1fr);gap:16px}
+  .caption p{font-size:24px}
+  .caption code{white-space:normal;word-break:break-word}
+  .anatomy{grid-template-columns:minmax(0,1fr);gap:0}
+  .wires{display:none}
+  .source{margin-bottom:0}
+  .outputs{position:relative;padding-top:48px;margin-top:0}
+  .outputs::before{content:"";position:absolute;left:32px;top:0;height:48px;border-left:1.5px dashed var(--wax)}
+  .g-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .arc-list dl>div{grid-template-columns:minmax(0,1fr);gap:6px}
+  .fineprint{grid-template-columns:minmax(0,1fr)}
+  .track{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .track .info{grid-column:1 / -1;padding:0 0 16px}
+  .track.hd span:first-child{display:none}
+}
+@media (max-width:640px){
+  body{font-size:15px}
+  .top{padding-block:16px}
+  .top nav{gap:10px}
+  .top nav a.nl2{display:none}
+  .top .btn{padding:0 16px}
+  .brand{font-size:22px}
+  .hero-art{height:340px}
+  .letter{padding:20px;height:240px}
+  .seal{width:160px;height:160px;transform:translate(70px,70px)}
+  @keyframes press{from{transform:translate(70px,40px) scale(1.25);opacity:0}to{transform:translate(70px,70px) scale(1);opacity:1}}
+  .stats b{font-size:32px}
+  .panel{padding:24px}
+  .panel-head h3{font-size:26px}
+  .vrow{grid-template-columns:26px minmax(0,1fr) 64px 44px;gap:10px}
+  .vrow .who{font-size:14px}
+  .col{padding:20px}
+  .col-l{grid-template-columns:minmax(0,1fr)}
+  .col-r{flex-direction:column;align-items:stretch}
+  .col-r .key,.col-r .treasury{flex:none}
+  .dial{align-self:center}
+  .ledger{grid-template-columns:minmax(0,1fr) auto}
+  .ledger .who{grid-column:1 / -1}
+  .proposal{flex-direction:column;align-items:flex-start}
+  .source{padding:24px}
+  .g-grid{grid-template-columns:minmax(0,1fr)}
+  .g-grid>div{padding:24px}
+  .band{grid-template-columns:minmax(0,1fr);}
+  .band .m{height:4px}
+  .band-legend{grid-template-columns:minmax(0,1fr);gap:4px}
+  .band-legend span:nth-child(2){display:none}
+  .band-legend span:last-child{padding-left:0}
+  .proof-head .addr{text-align:left}
+  .track.hd{font-size:9px;letter-spacing:0}
+  .parts>div{grid-template-columns:minmax(0,1fr) auto;gap:4px 16px}
+  .parts span{grid-column:1 / -1;grid-row:2}
+  .docs{grid-template-columns:minmax(0,1fr)}
+}
 </style>
 </head>
 <body>
-<a class="skip" href="#how" data-i18n="skip">Skip to how it works</a>
+<a class="skip" href="#how" data-i18n="skip">Skip to the walkthrough</a>
+
 <div class="wrap">
   <header class="top">
-    <a class="brand" href="./"><span data-i18n="brand">ArcSeal</span><span data-i18n="brandSub">on Arc</span></a>
+    <a class="brand" href="./" aria-label="ArcSeal home">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="13" fill="var(--wax)"/><circle cx="14" cy="14" r="9" fill="none" stroke="#F3EEE4" stroke-opacity=".45"/><path d="M9 18 L14 8 L19 18 M11 14.5 H17" fill="none" stroke="#F3EEE4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      ArcSeal
+    </a>
     <nav aria-label="Page">
-      <a href="#how" data-i18n="navHow">How it works</a>
-      <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
-      <a href="#built" data-i18n="navBuilt">Built</a>
-      <a href="https://github.com/r4topunk/arcseal">GitHub</a>
+      <a class="nl" href="#why" data-i18n="navWhy">Why seal</a>
+      <a class="nl" href="#how" data-i18n="navHow">See it work</a>
+      <a class="nl" href="#anatomy" data-i18n="navAnatomy">Anatomy</a>
+      <a class="nl" href="#proof" data-i18n="navProof">Mainnet proof</a>
+      <a class="nl nl2" href="https://github.com/r4topunk/arcseal">GitHub</a>
       <span class="langs" role="group" aria-label="Language">
         <button type="button" id="lang-en" aria-pressed="true">EN</button>
-        <button type="button" id="lang-pt" aria-pressed="false">PT-BR</button>
+        <button type="button" id="lang-pt" aria-pressed="false">PT</button>
       </span>
+      <a class="btn ink" href="./app/proposals/" data-i18n="navApp">Open the app</a>
     </nav>
   </header>
+
   <main>
     <section class="hero" aria-labelledby="h1">
-      <div>
-        <span class="kicker" data-i18n="kicker">Sealed voting for Arc</span>
-        <h1 id="h1">ArcSeal</h1>
-        <p class="tag" data-i18n="tag">Votes nobody can read until the round closes — and anyone can reveal after.</p>
+      <div class="hero-copy">
+        <span class="eyebrow" data-i18n="kicker">Timelock-encrypted voting · live on Arc mainnet</span>
+        <h1 id="h1" data-i18n="h1">Every vote stays sealed <em>until the clock</em> opens it.</h1>
+        <p class="lede" data-i18n="heroP">ArcSeal locks each vote to a future drand round. Nobody can read it while voting is open — not the other members, not the contract. When the round arrives, anyone can open every vote at once.</p>
         <div class="cta">
-          <a class="btn primary" href="#how" data-i18n="ctaHow">See how it works</a>
-          <a class="btn" href="https://github.com/r4topunk/arcseal" data-i18n="ctaGithub">View on GitHub</a>
+          <a class="btn wax" href="#how" data-i18n="ctaWatch">Watch a vote, step by step ↓</a>
+          <a class="btn" href="./app/proposals/" data-i18n="ctaLive">See the live DAO</a>
         </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="letter">
+          <div class="row"><span data-i18n="letterP">PROPOSAL #1</span><span data-i18n="letterR">CLOSE ROUND N</span></div>
+          <div class="ct">age-encryption.org/v1 -&gt; tlock N 52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971 YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IHRsb2NrIE4K…</div>
+          <div class="row"><span>commitment 0x…</span><span>SealedDAO</span></div>
+        </div>
+        <svg class="seal" width="220" height="220" viewBox="0 0 220 220">
+          <defs><path id="ring" d="M110,110 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0"/></defs>
+          <path d="M110 8 C140 10 150 22 172 30 C196 40 206 62 210 86 C216 112 206 132 208 156 C204 184 182 200 158 208 C134 216 118 210 96 212 C70 214 46 204 30 186 C12 166 10 144 8 120 C6 94 12 70 28 50 C46 26 76 6 110 8 Z" fill="#8C2A1E"/>
+          <circle cx="110" cy="110" r="84" fill="none" stroke="#000" stroke-opacity=".18" stroke-width="3"/>
+          <circle cx="110" cy="110" r="60" fill="none" stroke="#FBF7EF" stroke-opacity=".35"/>
+          <text font-family="Geist Mono, monospace" font-size="10.5" letter-spacing="3" fill="#FBF7EF" fill-opacity=".7"><textPath href="#ring">SEALED · DRAND QUICKNET · ARC 5042 · </textPath></text>
+          <text x="110" y="132" text-anchor="middle" font-family="Instrument Serif, Georgia, serif" font-size="68" fill="#FBF7EF" fill-opacity=".92">A</text>
+        </svg>
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Key numbers">
+      <div><b>0.0014</b><span data-i18n="stat1">USDC to seal a vote, gas included</span></div>
+      <div><b>3 s</b><span data-i18n="stat2">drand quicknet round period</span></div>
+      <div><b data-i18n="stat3b">10 min – 7 d</b><span data-i18n="stat3">voting window, set per proposal</span></div>
+      <div><b>0</b><span data-i18n="stat4">owners, relayers or upgrade keys</span></div>
+    </section>
+
+    <!-- Why seal -->
+    <section class="sec" id="why" aria-labelledby="h-why">
+      <div class="sec-head">
+        <h2 id="h-why" data-i18n="whyH2">An open tally <em>votes for you.</em></h2>
+        <p class="lede" data-i18n="whyP">Onchain votes are public the moment they land. The last voters see the score and follow it. ArcSeal keeps the score closed until everyone has voted.</p>
+      </div>
+      <div class="versus">
+        <div class="panel light">
+          <div class="panel-head"><h3 data-i18n="vsPlainH">Ordinary onchain vote</h3><span data-i18n="vsPlainS">TALLY PUBLIC WHILE OPEN</span></div>
+          <div>
+            <div class="vrow"><span class="t">t1</span><span class="who"><span data-i18n="voter1">Voter 1</span> → <span class="for" data-i18n="vFor">For</span></span><div class="bar"><div class="f" style="width:20%"></div></div><span class="score">1 – 0</span></div>
+            <div class="vrow"><span class="t">t2</span><span class="who"><span data-i18n="voter2">Voter 2</span> → <span class="for" data-i18n="vFor">For</span></span><div class="bar"><div class="f" style="width:40%"></div></div><span class="score">2 – 0</span></div>
+            <div class="vrow"><span class="t">t3</span><span class="who"><span data-i18n="voter3">Voter 3</span> → <span data-i18n="vAgainst">Against</span></span><div class="bar"><div class="f" style="width:40%"></div><div class="a" style="width:20%"></div></div><span class="score">2 – 1</span></div>
+            <div class="vrow"><span class="t">t4</span><span class="who"><span data-i18n="voter4">Voter 4</span> → <span class="for" data-i18n="vFor">For</span></span><div class="bar"><div class="f" style="width:60%"></div><div class="a" style="width:20%"></div></div><span class="score">3 – 1</span></div>
+            <div class="vrow"><span class="t">t5</span><span class="who"><span data-i18n="voter5">Voter 5</span> → <span data-i18n="vAgainst">Against</span></span><div class="bar"><div class="f" style="width:60%"></div><div class="a" style="width:40%"></div></div><span class="score">3 – 2</span></div>
+          </div>
+          <p class="panel-note"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--wax)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><span data-i18n="vsPlainN">Voters 4 and 5 already know the score. Late voters follow the lead, and deals get made mid-vote.</span></p>
+        </div>
+        <div class="panel dark">
+          <div class="panel-head"><h3 data-i18n="vsSealH">With ArcSeal</h3><span data-i18n="vsSealS">TALLY SEALED UNTIL ROUND N</span></div>
+          <div>
+            <div class="vrow"><span class="t">t1</span><span class="who"><span data-i18n="voter1">Voter 1</span> → <svg width="22" height="16" viewBox="0 0 22 16" role="img" aria-label="sealed"><rect x=".5" y=".5" width="21" height="15" rx="2" fill="#2A241D" stroke="#5A5145"/><path d="M1 1 L11 9 L21 1" fill="none" stroke="#5A5145"/><circle cx="11" cy="9" r="3.4" fill="var(--wax)"/></svg></span><div class="bar hatch"></div><span class="score">? – ?</span></div>
+            <div class="vrow"><span class="t">t2</span><span class="who"><span data-i18n="voter2">Voter 2</span> → <svg width="22" height="16" viewBox="0 0 22 16" role="img" aria-label="sealed"><rect x=".5" y=".5" width="21" height="15" rx="2" fill="#2A241D" stroke="#5A5145"/><path d="M1 1 L11 9 L21 1" fill="none" stroke="#5A5145"/><circle cx="11" cy="9" r="3.4" fill="var(--wax)"/></svg></span><div class="bar hatch"></div><span class="score">? – ?</span></div>
+            <div class="vrow"><span class="t">t3</span><span class="who"><span data-i18n="voter3">Voter 3</span> → <svg width="22" height="16" viewBox="0 0 22 16" role="img" aria-label="sealed"><rect x=".5" y=".5" width="21" height="15" rx="2" fill="#2A241D" stroke="#5A5145"/><path d="M1 1 L11 9 L21 1" fill="none" stroke="#5A5145"/><circle cx="11" cy="9" r="3.4" fill="var(--wax)"/></svg></span><div class="bar hatch"></div><span class="score">? – ?</span></div>
+            <div class="vrow"><span class="t">t4</span><span class="who"><span data-i18n="voter4">Voter 4</span> → <svg width="22" height="16" viewBox="0 0 22 16" role="img" aria-label="sealed"><rect x=".5" y=".5" width="21" height="15" rx="2" fill="#2A241D" stroke="#5A5145"/><path d="M1 1 L11 9 L21 1" fill="none" stroke="#5A5145"/><circle cx="11" cy="9" r="3.4" fill="var(--wax)"/></svg></span><div class="bar hatch"></div><span class="score">? – ?</span></div>
+            <div class="vrow"><span class="t">t5</span><span class="who"><span data-i18n="voter5">Voter 5</span> → <svg width="22" height="16" viewBox="0 0 22 16" role="img" aria-label="sealed"><rect x=".5" y=".5" width="21" height="15" rx="2" fill="#2A241D" stroke="#5A5145"/><path d="M1 1 L11 9 L21 1" fill="none" stroke="#5A5145"/><circle cx="11" cy="9" r="3.4" fill="var(--wax)"/></svg></span><div class="bar hatch"></div><span class="score">? – ?</span></div>
+            <div class="vrow final"><span class="t">N</span><span class="who" data-i18n="vsOpen">round opens all</span><div class="bar"><div class="f" style="width:60%"></div><div class="a" style="width:40%"></div></div><span class="score">3 – 2</span></div>
+          </div>
+          <p class="panel-note"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span data-i18n="vsSealN">Every voter decides blind. The score exists only once, at the close round, for everyone at the same time.</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Walkthrough -->
+    <section class="sec" id="how" aria-labelledby="h-how">
+      <div class="sim-head">
+        <div class="titles">
+          <span class="eyebrow" data-i18n="simEyebrow">Interactive · one proposal, start to finish</span>
+          <h2 id="h-how" data-i18n="simH2">Watch a vote <em>seal and open.</em></h2>
+        </div>
+        <div class="controls">
+          <button type="button" class="circle" id="sim-prev" aria-label="Previous step">←</button>
+          <button type="button" class="play" id="sim-play">❚❚ Pause</button>
+          <button type="button" class="circle" id="sim-next" aria-label="Next step">→</button>
+        </div>
+      </div>
+
+      <div class="sim">
+        <div class="tabs" id="sim-tabs"></div>
+        <div class="stage">
+          <div class="col col-l">
+            <div class="lbl" data-i18n="simMembers">Members</div>
+            <div class="member"><span class="avatar">A</span><span class="nm"><b data-i18n="mA">Member A</b><small data-i18n="rA">proposer</small></span><span class="chip" id="chip-0"></span></div>
+            <div class="member"><span class="avatar">B</span><span class="nm"><b data-i18n="mB">Member B</b><small data-i18n="rB">member</small></span><span class="chip" id="chip-1"></span></div>
+            <div class="member"><span class="avatar">C</span><span class="nm"><b data-i18n="mC">Member C</b><small data-i18n="rC">member · recipient</small></span><span class="chip" id="chip-2"></span></div>
+            <div class="revealer" id="revealer"><span class="avatar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span><span class="nm" style="display:flex;flex-direction:column;gap:2px"><b style="font-size:15px" data-i18n="anyone">Anyone</b><small style="font-size:12px;color:var(--faint)" data-i18n="anyoneS">clicks “Reveal votes”</small></span></div>
+          </div>
+
+          <div class="col col-m">
+            <div class="lbl"><span data-i18n="simStores">What Arc stores</span><span>SealedDAO · 0x789f…2c44</span></div>
+            <div class="box proposal">
+              <div class="t"><small>PROPOSAL #1 · TransferUSDC</small><b data-i18n="simProp">Pay 1 USDC to member C</b></div>
+              <span class="status" id="prop-status"></span>
+            </div>
+            <div class="box ledger" id="led-0"><span class="who" data-i18n="voteA">vote · A</span><div class="lines"><span data-c="commitment 0xa91f…7c21d0"></span><span class="c2"></span></div><span class="chip"></span></div>
+            <div class="box ledger" id="led-1"><span class="who" data-i18n="voteB">vote · B</span><div class="lines"><span data-c="commitment 0x3e07…b04e9a"></span><span class="c2"></span></div><span class="chip"></span></div>
+            <div class="box ledger" id="led-2"><span class="who" data-i18n="voteC">vote · C</span><div class="lines"><span data-c="commitment 0xc4d2…19f3e6"></span><span class="c2"></span></div><span class="chip"></span></div>
+            <div class="box tally">
+              <div class="lbl"><span data-i18n="simTally">Public tally</span><span id="tally-note"></span></div>
+              <div class="tally-bar hidden" id="tally-bar"></div>
+            </div>
+          </div>
+
+          <div class="col col-r">
+            <div class="lbl" data-i18n="simClock">drand clock</div>
+            <div class="dial">
+              <svg width="200" height="200" viewBox="0 0 200 200" aria-hidden="true">
+                <circle cx="100" cy="100" r="86" fill="none" stroke="var(--line-soft)" stroke-width="10"/>
+                <circle class="arc" id="dial-arc" cx="100" cy="100" r="86" fill="none" stroke="var(--wax)" stroke-width="10" stroke-linecap="round" stroke-dasharray="540.4" stroke-dashoffset="540.4" transform="rotate(-90 100 100)"/>
+              </svg>
+              <div class="face"><b id="dial-big">N − 1,200</b><small id="dial-small"></small></div>
+            </div>
+            <div class="key" id="key"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.5 12.5 21 2M17 6l3 3M15 8l2 2"/></svg><span id="key-text"></span></div>
+            <div class="treasury">
+              <div class="lbl" data-i18n="simTreasury">Treasury · USDC</div>
+              <b id="treasury">2.00</b>
+              <p id="treasury-note"></p>
+            </div>
+          </div>
+        </div>
+        <div class="caption">
+          <p id="caption" aria-live="polite"></p>
+          <code id="code"></code>
+        </div>
+      </div>
+      <p class="fine" data-i18n="simFine">Illustrative walkthrough: the real proofs on mainnet are below.</p>
+    </section>
+
+    <!-- Anatomy -->
+    <section class="sec" id="anatomy" aria-labelledby="h-anat">
+      <div class="sec-head">
+        <h2 id="h-anat" data-i18n="anatH2">Anatomy of <em>one sealed vote.</em></h2>
+        <p class="lede" data-i18n="anatP">Pick a choice and watch what your browser produces. Two things go onchain, one stays with you. The contract never opens the ciphertext; at reveal it only checks that the opened vote hashes back to the commitment.</p>
+      </div>
+      <div class="anatomy">
+        <div class="source">
+          <div class="lbl" data-i18n="anatIn">In your browser</div>
+          <div class="field">
+            <span data-i18n="anatChoice">Your choice</span>
+            <div class="choices" role="group" aria-label="Choice">
+              <button type="button" data-choice="For" aria-pressed="true" data-i18n="vFor">For</button>
+              <button type="button" data-choice="Against" aria-pressed="false" data-i18n="vAgainst">Against</button>
+              <button type="button" data-choice="Abstain" aria-pressed="false" data-i18n="vAbstain">Abstain</button>
+            </div>
+          </div>
+          <div class="field">
+            <div class="fh"><span data-i18n="anatSalt">Random salt · 32 bytes</span><button type="button" class="reroll" id="reroll" data-i18n="anatNew">↻ new</button></div>
+            <span class="salt" id="salt"></span>
+          </div>
+          <div class="who">proposal #1 · voter 0x47bD…34E0</div>
+        </div>
+        <svg class="wires" width="170" height="480" viewBox="0 0 170 480" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 240 C 90 240, 80 80, 170 80" fill="none" stroke="var(--wax)" stroke-width="1.5" stroke-dasharray="4 5"/>
+          <path d="M0 240 L 170 240" fill="none" stroke="var(--wax)" stroke-width="1.5" stroke-dasharray="4 5"/>
+          <path d="M0 240 C 90 240, 80 400, 170 400" fill="none" stroke="var(--ghost)" stroke-width="1.5" stroke-dasharray="4 5"/>
+          <circle cx="3" cy="240" r="5" fill="var(--wax)"/>
+          <text x="96" y="130" font-family="Geist Mono, monospace" font-size="11" fill="var(--faint)">keccak256</text>
+          <text x="96" y="232" font-family="Geist Mono, monospace" font-size="11" fill="var(--faint)">tlock → N</text>
+          <text x="96" y="372" font-family="Geist Mono, monospace" font-size="11" fill="var(--faint)">keep</text>
+        </svg>
+        <div class="outputs">
+          <div class="out">
+            <div class="oh"><b data-i18n="outCommit">Commitment</b><span class="tag" data-i18n="outCommitT">ONCHAIN · 32 BYTES</span></div>
+            <span class="val" id="commit"></span>
+            <small data-i18n="outCommitS">keccak256(proposalId, voter, choice, salt). Hides the choice now, proves it later — the only thing the contract ever checks.</small>
+          </div>
+          <div class="out">
+            <div class="oh"><b data-i18n="outCipher">Ciphertext</b><span class="tag" data-i18n="outCipherT">ONCHAIN · OPENS AT ROUND N</span></div>
+            <span class="val ct" id="cipher"></span>
+            <small data-i18n="outCipherS">Nobody can open it before round N, and nobody needs you to open it after.</small>
+          </div>
+          <div class="out local">
+            <div class="oh"><b data-i18n="outReceipt">Receipt</b><span class="tag" data-i18n="outReceiptT">STAYS IN YOUR BROWSER</span></div>
+            <span class="val" id="receipt"></span>
+            <small data-i18n="outReceiptS">Optional. It proves your own vote — which is also why ArcSeal is not coercion-resistant.</small>
+          </div>
+        </div>
+      </div>
+      <p class="fine" data-i18n="anatFine">Values here are illustrative. The real ones come from @arcseal/sdk in the app.</p>
+    </section>
+  </main>
+</div>
+
+<!-- Guarantees + Why Arc -->
+<section class="night" id="guarantees" aria-labelledby="h-g">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="h-g" data-i18n="gH2">What the contract promises, <em>and keeps.</em></h2>
+      <p class="lede" data-i18n="gP">SealedDAO is immutable: no owner, no upgrade, no pause. Treasury token, quorum and reveal payment are fixed at deployment.</p>
+    </div>
+    <div class="g-grid">
+      <div><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg><h3 data-i18n="g1h">The hash rules</h3><p data-i18n="g1p">The contract never parses a ciphertext and runs no onchain BLS check. It only compares hashes at reveal.</p></div>
+      <div><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg><h3 data-i18n="g2h">No relayer</h3><p data-i18n="g2p">Any visitor or SDK script can reveal. Nothing in the protocol depends on this site.</p></div>
+      <div><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4M17 12h4M7 12c2-6 8-6 10 0"/><circle cx="12" cy="17" r="1.5"/></svg><h3 data-i18n="g3h">Bad items never block</h3><p data-i18n="g3p">Mismatched, unknown or duplicate items are skipped (<code>RevealSkipped</code>); the rest of the batch still lands.</p></div>
+      <div><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg><h3 data-i18n="g4h">Pull-only payouts</h3><p data-i18n="g4p">Payouts are credited, then claimed by their own recipient. A blocklisted address stalls no one.</p></div>
+      <div><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M5 7h14M5 7l-3 7h6zM19 7l-3 7h6z"/></svg><h3 data-i18n="g5h">Quorum ≠ outcome</h3><p data-i18n="g5p">Quorum counts sealed votes; passing counts revealed ones only. Ties fail. An unrevealed vote is never lost.</p></div>
+      <div><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><h3 data-i18n="g6h">No drain without a pass</h3><p data-i18n="g6p">The reveal payment is credited only for a proposal that met quorum, so a lone member cannot empty the treasury.</p></div>
+    </div>
+
+    <div class="arc-list">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <span class="eyebrow" data-i18n="arcEyebrow">Built for Arc</span>
+        <h3 data-i18n="arcH">Why Arc.</h3>
+        <p class="lede" style="font-size:16px" data-i18n="arcP">Arc has no VRF and no timelock service, so ArcSeal brings its own primitive — and leans on what Arc does have.</p>
       </div>
       <dl>
-        <div><dt data-i18n="problemT">The problem</dt><dd data-i18n="problemD">Public voting has a bandwagon problem: a running tally shapes votes before they are cast, and every vote is readable onchain the moment it lands.</dd></div>
-        <div><dt data-i18n="solutionT">The solution</dt><dd data-i18n="solutionD">Every vote is timelock-encrypted to a <b>drand</b> round chosen when voting opens. Nobody, including the contract, can read it before that round is public — and after that, anyone can decrypt it and reveal it in one transaction.</dd></div>
+        <div><dt data-i18n="arc1t">Gas paid in USDC</dt><dd data-i18n="arc1d">Sealing a vote costs about 0.0014 USDC; the reveal payment is paid in the same unit the revealer spends.</dd></div>
+        <div><dt data-i18n="arc2t">Deterministic finality</dt><dd data-i18n="arc2d">A sealed vote is final on inclusion, so it counts right after the close with no confirmation depth.</dd></div>
+        <div><dt data-i18n="arc3t">Native USDC treasury</dt><dd data-i18n="arc3d">Treasury and gas are the same asset, read through the 6-decimal ERC-20 view at <code>0x3600…0000</code>.</dd></div>
+        <div><dt data-i18n="arc4t">USDC blocklist</dt><dd data-i18n="arc4d">Pull-based <code>claim()</code> means a blocked recipient can never stall a proposal for anyone else.</dd></div>
       </dl>
-    </section>
+    </div>
+  </div>
+</section>
 
-    <section class="sec" id="how" aria-labelledby="h-how">
-      <div class="sec-head">
-        <h2 id="h-how" data-i18n="howH2">How it works</h2>
-        <p data-i18n="howP">Timelock encryption first, as a sealed envelope — then exactly how <code>SealedDAO</code> uses it for a vote.</p>
+<div class="wrap">
+  <!-- Stated plainly -->
+  <section class="sec plain" id="privacy" aria-labelledby="h-plain">
+    <span class="eyebrow" data-i18n="plainEyebrow">Privacy, stated plainly</span>
+    <p class="big" id="h-plain" data-i18n="plainBig">Secret <em>during</em> voting. Public, per address, <em>forever</em> after. <span>This is not anonymity.</span></p>
+    <div>
+      <div class="band" role="img" aria-label="Timeline: sealed while voting is open; public forever after the close round">
+        <div class="s"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span data-i18n="bandS">Voting open · nobody can read any vote</span></div>
+        <div class="m"></div>
+        <div class="o"><span style="display:flex;align-items:center;gap:12px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><span data-i18n="bandO">Anyone can decrypt · (voter, choice) public</span></span><i>→ ∞</i></div>
       </div>
+      <div class="band-legend"><span data-i18n="bandL1">propose</span><span></span><span data-i18n="bandL2">▲ close round N — reveal, finalize, execute</span></div>
+    </div>
+    <ul class="fineprint">
+      <li data-i18n="privacy1"><b>Secrecy holds during voting.</b> Nobody — not other voters, not the contract, not ArcSeal's authors — can read a sealed vote's choice before its round is public. This relies on drand's League of Entropy threshold staying honest.</li>
+      <li data-i18n="privacy2"><b>From the close round on, anyone can decrypt every sealed vote from the chain;</b> after the reveal, each vote is public per address, permanently, in the event log.</li>
+      <li data-i18n="privacy3"><b>This is not anonymity.</b> If you need who voted, or how, to stay hidden after the fact, ArcSeal is not the right tool.</li>
+      <li data-i18n="privacy4"><b>It does not stop a willing seller.</b> Your vote receipt proves your choice to anyone you show it to, so ArcSeal is not coercion-resistant.</li>
+    </ul>
+  </section>
 
-      <div class="how-grid">
-        <div class="envelope">
-          <div class="icon" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 6l9 6 9-6M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <h3 data-i18n="envH3">A sealed envelope that opens itself</h3>
-          <p data-i18n="envP">You write your choice, seal it, and hand it over in public. Anyone can see the envelope exists — nobody can see what's inside. When the clock you agreed on arrives, the lock opens on its own. Nobody has to come back and unlock it.</p>
-          <ol class="env-steps">
-            <li><b data-i18n="env1b">1</b><span data-i18n="env1">Seal — encrypt your choice to a moment in the future.</span></li>
-            <li><b data-i18n="env2b">2</b><span data-i18n="env2">Wait — that moment arrives, on a public clock nobody controls.</span></li>
-            <li><b data-i18n="env3b">3</b><span data-i18n="env3">Open — anyone can decrypt it and check it against your fingerprint.</span></li>
-          </ol>
+  <!-- Proof -->
+  <section class="sec" id="proof" aria-labelledby="h-proof">
+    <div class="proof-head">
+      <h2 id="h-proof" data-i18n="proofH2">Proven on mainnet.</h2>
+      <div class="addr"><div>SealedDAO · <a href="https://explorer.arc.io/address/0x789f7689efb75a1696c5a25d5ae97ac2cf6a2c44">0x789f…2c44</a></div><a href="https://repo.sourcify.dev/5042/0x789f7689eFb75a1696C5A25d5aE97Ac2cF6A2c44" data-i18n="sourcify">Arc 5042 · Sourcify exact match ↗</a></div>
+    </div>
+    <div class="track hd" aria-hidden="true"><span></span><span data-i18n="stP">PROPOSED</span><span data-i18n="stS">SEALED</span><span data-i18n="stR">REVEALED</span><span data-i18n="stF">FINALIZED</span><span data-i18n="stE">EXECUTED</span></div>
+    <div class="track row">
+      <div class="info"><small>PROPOSAL 1 · TransferUSDC</small><b data-i18n="p1t">Pay 1 USDC</b><span data-i18n="p1n">3 of 3 revealed through the site's button · <a href="https://explorer.arc.io/tx/0x66e70f35000463ec17d28acfa7d035b2ca3ab81af332f44a50026dc41b828320">reveal tx</a></span></div>
+      <span class="dot done"><i>✓</i></span><span class="dot done"><i>✓</i></span><span class="dot done"><i>✓</i></span><span class="dot"><i></i></span><span class="dot"><i></i></span>
+    </div>
+    <div class="track row">
+      <div class="info"><small>PROPOSAL 2 · SetMember</small><b data-i18n="p2t">Add a member</b><span data-i18n="p2n">2 of 2 revealed through the site's button · <a href="https://explorer.arc.io/tx/0x781c14ee4a48f51c99fd3e161f9dafe2bc569b38812959b077fe486ccfb12319">reveal tx</a></span></div>
+      <span class="dot done"><i>✓</i></span><span class="dot done"><i>✓</i></span><span class="dot done"><i>✓</i></span><span class="dot"><i></i></span><span class="dot"><i></i></span>
+    </div>
+    <div class="track row">
+      <div class="info"><small data-i18n="p3k">PROPOSAL 3 · below quorum</small><b data-i18n="p3t">Fails by design</b><span data-i18n="p3n">1 revealed, 1 garbage item skipped, no payment · <a href="https://explorer.arc.io/tx/0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2">reveal tx</a></span></div>
+      <span class="dot done"><i>✓</i></span><span class="dot done"><i>✓</i></span><span class="dot done"><i>✓</i></span><span class="dot"><i></i></span><span class="dot na"><i></i></span>
+    </div>
+    <p class="fine" data-i18n="proofFine">Hollow = pending. Finalize and execute open when the 24 h reveal window ends (2026-09-19 14:08 UTC). The proof DAO's members are wallets the author controls.</p>
+
+    <div class="built">
+      <div>
+        <h3 class="sub-h" data-i18n="builtH">What's built</h3>
+        <div class="parts">
+          <div><b>Sealed.sol</b><span data-i18n="part1">Abstract primitive: hash commitments keyed to a drand round, reveal by hash, no owner</span><em data-i18n="part1n">in the suite below</em></div>
+          <div><b>SealedDAO.sol</b><span data-i18n="part2">Member-list DAO: sealed voting, USDC treasury, pull-based payouts</span><em data-i18n="part2n">173 tests</em></div>
+          <div><b>@arcseal/tlock</b><span data-i18n="part3">Vendored tlock-js, quicknet only, Node and browser</span><em data-i18n="part3n">72 tests</em></div>
+          <div><b>@arcseal/sdk</b><span data-i18n="part4">seal, unseal, reveal-all, viem actions for every contract call</span><em data-i18n="part4n">129 tests</em></div>
+          <div><b>apps/web</b><span data-i18n="part5">Static site: proposals, voting, reveal, treasury</span><em data-i18n="part5n">77 tests</em></div>
         </div>
-        <div class="diagram-wrap">
-<pre class="diagram" data-i18n="diagram">    you                                       drand quicknet (League of Entropy)
-     |                                                    |
-     |-- seal(choice) → hash + ciphertext -->  <b>vote()</b>     round R not public yet
-     |                                           |
-     |                              <b>SealedDAO</b> stores only the hash and round R
-     |                                           |
-     |                              <-- round R published ------------------------|
-     |                                           |
-  anyone -- decrypt every vote, check hash --> <b>revealBatch()</b>  -->  tally, <b>finalize()</b></pre>
-        </div>
       </div>
-
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th data-i18n="whyArcCol1">Arc property</th><th data-i18n="whyArcCol2">What ArcSeal does with it</th></tr></thead>
-          <tbody>
-            <tr><th scope="row" data-i18n="whyArc1t">Gas paid in USDC, 20 gwei floor</th><td data-i18n="whyArc1d">Sealing a vote costs about 0.0014 USDC, and the small fixed payment for revealing a vote is paid in the same unit it covers.</td></tr>
-            <tr><th scope="row" data-i18n="whyArc2t">Sub-second deterministic finality, no reorgs</th><td data-i18n="whyArc2d">A sealed vote is final on inclusion, so it can be counted right after the close with no confirmation depth to wait for.</td></tr>
-            <tr><th scope="row" data-i18n="whyArc3t">USDC is native and an ERC-20 at 0x3600…0000 (6 decimals)</th><td data-i18n="whyArc3d">The treasury and the gas are the same asset. Members hold only USDC, read only through its 6-decimal view.</td></tr>
-            <tr><th scope="row" data-i18n="whyArc4t">USDC blocklist reverts transfers</th><td data-i18n="whyArc4d">All payouts are pull-based (<code>claim</code>), never pushed, so a blocked recipient can never stall a proposal for anyone else.</td></tr>
-            <tr><th scope="row" data-i18n="whyArc5t">No VRF or timelock service on Arc</th><td data-i18n="whyArc5d">ArcSeal is greenfield: it brings its own timelock-encryption primitive instead of depending on one.</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3 style="margin-top:44px;font-size:20px" data-i18n="votingH3">How SealedDAO voting works</h3>
-      <ol class="steps">
-        <li><div><b data-i18n="step1b">Propose</b><span data-i18n="step1">A member proposes a USDC transfer or a membership change, and picks a voting window from 10 minutes to 7 days.</span></div></li>
-        <li><div><b data-i18n="step2b">Seal</b><span data-i18n="step2">Each member seals one vote — For, Against or Abstain — before the window closes. Only a hash and an encrypted blob are ever posted.</span></div></li>
-        <li><div><b data-i18n="step3b">Close</b><span data-i18n="step3">Voting closes at a chosen drand round. From that instant, anyone can decrypt every sealed vote.</span></div></li>
-        <li><div><b data-i18n="step4b">Reveal</b><span data-i18n="step4">Anyone decrypts every vote in their own browser and submits them in one transaction. When the proposal met quorum, a small fixed payment per revealed vote covers that transaction's gas.</span></div></li>
-        <li><div><b data-i18n="step5b">Finalize</b><span data-i18n="step5">24 hours after the close, the tally is fixed: quorum is measured over sealed votes, and passing is measured over revealed votes.</span></div></li>
-        <li><div><b data-i18n="step6b">Execute &amp; claim</b><span data-i18n="step6">A passed proposal can be executed within 7 days after the reveal window ends. Every payout is claimed by its own recipient — never pushed to them.</span></div></li>
-      </ol>
-
-      <div class="privacy" id="privacy">
-        <h3 data-i18n="privacyH3">Privacy, stated plainly</h3>
-        <ul>
-          <li data-i18n="privacy1"><b>Secrecy holds during voting.</b> Nobody — not other voters, not the contract, not ArcSeal's authors — can read a sealed vote's choice before its round is public. This relies on drand's League of Entropy threshold staying honest.</li>
-          <li data-i18n="privacy2"><b>From the close round on, anyone can decrypt every sealed vote from the chain;</b> after the reveal, each vote is public per address, permanently, in the event log.</li>
-          <li data-i18n="privacy3"><b>This is not anonymity.</b> If you need who voted, or how, to stay hidden after the fact, ArcSeal is not the right tool.</li>
-          <li data-i18n="privacy4"><b>It does not stop a willing seller.</b> Your vote receipt proves your choice to anyone you show it to, so ArcSeal is not coercion-resistant.</li>
-        </ul>
-      </div>
-    </section>
-
-    <section class="sec" id="built" aria-labelledby="h-built">
-      <div class="sec-head">
-        <h2 id="h-built" data-i18n="builtH2">What's built</h2>
-        <p data-i18n="builtP">An open-source, MIT-licensed building block. No token, no sale, no yield, no prize, no chance — only a voting and treasury primitive.</p>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th data-i18n="partCol">Part</th><th data-i18n="whatCol">What it does</th><th data-i18n="testsCol">Tests</th></tr></thead>
-          <tbody>
-            <tr><th scope="row">Sealed.sol</th><td data-i18n="part1">Abstract primitive: hash commitments keyed to a drand round, reveal by hash, no owner, never deployed alone</td><td class="num" data-i18n="part1n">part of the suite below</td></tr>
-            <tr><th scope="row">SealedDAO.sol</th><td data-i18n="part2">Member-list DAO: sealed voting, USDC treasury, pull-based payouts</td><td class="num" data-i18n="part2n">173 tests (3 fork tests skipped)</td></tr>
-            <tr><th scope="row">@arcseal/tlock</th><td data-i18n="part3">Vendored tlock-js, quicknet only, Node and browser</td><td class="num" data-i18n="part3n">72 tests</td></tr>
-            <tr><th scope="row">@arcseal/sdk</th><td data-i18n="part4">seal, unseal, reveal-all, viem actions for every contract call</td><td class="num" data-i18n="part4n">129 tests</td></tr>
-            <tr><th scope="row">apps/web</th><td data-i18n="part5">Static site: proposals, voting, reveal, treasury</td><td class="num" data-i18n="part5n">77 tests</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="status">
-        <div>
-          <span class="dot" data-i18n="statusLine">Status: live on Arc mainnet; proofs close on 2026-09-19</span>
-          <p data-i18n="statusP"><code>SealedDAO</code> is deployed and Sourcify-verified on Arc mainnet. All six sealed votes of the three proofs are revealed; finalize and execute follow when the 24 h reveal window ends (2026-09-19 14:08 UTC). The proof DAO's members are wallets the author controls.</p>
-          <ul class="addrs">
-            <li><span data-i18n="addr1">SealedDAO</span><span class="mono tbd" data-i18n="tbd1"><a href="https://explorer.arc.io/address/0x789f7689efb75a1696c5a25d5ae97ac2cf6a2c44">0x789f…2c44</a></span></li>
-            <li><span data-i18n="addr2">Proof 1: USDC transfer, revealed and executed</span><span class="mono tbd" data-i18n="tbd2">3 of 3 revealed (<a href="https://explorer.arc.io/tx/0x66e70f35000463ec17d28acfa7d035b2ca3ab81af332f44a50026dc41b828320">reveal tx</a>); executes 2026-09-19</span></li>
-            <li><span data-i18n="addr3">Proof 2: add a member</span><span class="mono tbd" data-i18n="tbd3">2 of 2 revealed (<a href="https://explorer.arc.io/tx/0x781c14ee4a48f51c99fd3e161f9dafe2bc569b38812959b077fe486ccfb12319">reveal tx</a>); executes 2026-09-19</span></li>
-            <li><span data-i18n="addr4">Proof 3: quorum not met, a reveal skipped</span><span class="mono tbd" data-i18n="tbd4">1 revealed, 1 skipped (<a href="https://explorer.arc.io/tx/0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2">reveal tx</a>)</span></li>
-          </ul>
-        </div>
+      <div>
+        <h3 class="sub-h" data-i18n="docsH">Read more</h3>
         <ul class="docs">
-          <li><a href="./app/proposals/"><span data-i18n="docApp">App</span><span data-i18n="docAppS">app/proposals/</span></a></li>
-          <li><a href="./docs/integration/"><span data-i18n="docInt">Integration guide</span><span data-i18n="docIntS">docs/integration/</span></a></li>
-          <li><a href="./docs/faq/"><span data-i18n="docFaq">FAQ</span><span data-i18n="docFaqS">docs/faq/</span></a></li>
-          <li><a href="./docs/spec/"><span data-i18n="docSpec">Spec summary</span><span data-i18n="docSpecS">docs/spec/</span></a></li>
-          <li><a href="https://github.com/r4topunk/arcseal/blob/main/README.md"><span data-i18n="docReadme">README</span><span>README.md</span></a></li>
-          <li><a href="https://github.com/r4topunk/arcseal/blob/main/docs/SPEC.md"><span data-i18n="docFullSpec">Full spec</span><span>docs/SPEC.md</span></a></li>
+          <li><a href="./app/proposals/"><span data-i18n="docApp">App</span><span>app/proposals/</span></a></li>
+          <li><a href="./docs/integration/"><span data-i18n="docInt">Integration guide</span><span>docs/integration/</span></a></li>
+          <li><a href="./docs/faq/"><span data-i18n="docFaq">FAQ</span><span>docs/faq/</span></a></li>
+          <li><a href="./docs/spec/"><span data-i18n="docSpec">Spec summary</span><span>docs/spec/</span></a></li>
           <li><a href="https://github.com/r4topunk/arcseal/blob/main/docs/THREATS.md"><span data-i18n="docThreats">Threat model</span><span>docs/THREATS.md</span></a></li>
           <li><a href="https://github.com/r4topunk/arcseal/blob/main/docs/GAS.md"><span data-i18n="docGas">Gas costs</span><span>docs/GAS.md</span></a></li>
+          <li><a href="https://github.com/r4topunk/arcseal/blob/main/README.md"><span>README</span><span>README.md</span></a></li>
           <li><a href="https://github.com/r4topunk/arcseal/blob/main/LICENSE"><span data-i18n="docLicense">License (MIT)</span><span>LICENSE</span></a></li>
         </ul>
       </div>
-    </section>
-  </main>
-  <footer>
-    <span data-i18n="footL">ArcSeal · MIT license · experimental, not externally audited</span>
-    <span data-i18n="footR">No token, no sale, no yield, no prize, no chance — a voting and treasury primitive only.</span>
-  </footer>
+    </div>
+  </section>
 </div>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-top">
+      <h2 data-i18n="footH">Seal the next <em>decision.</em></h2>
+      <div class="cta">
+        <a class="btn solid" href="./app/proposals/" data-i18n="navApp">Open the app</a>
+        <a class="btn" href="https://github.com/r4topunk/arcseal">GitHub</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span data-i18n="footL">ArcSeal · MIT license · experimental, not externally audited</span>
+      <span data-i18n="footR">No token, no sale, no yield, no prize, no chance — a voting and treasury primitive only.</span>
+    </div>
+  </div>
+</footer>
+
 <script>
 (() => {
   const STORAGE_KEY = 'arcseal:lang';
   const I18N = {
     en: {
-      skip:'Skip to how it works', brand:'ArcSeal', brandSub:'on Arc',
-      navHow:'How it works', navPrivacy:'Privacy', navBuilt:'Built',
-      kicker:'Sealed voting for Arc', tag:'Votes nobody can read until the round closes — and anyone can reveal after.',
-      ctaHow:'See how it works', ctaGithub:'View on GitHub',
-      problemT:'The problem', problemD:'Public voting has a bandwagon problem: a running tally shapes votes before they are cast, and every vote is readable onchain the moment it lands.',
-      solutionT:'The solution', solutionD:'Every vote is timelock-encrypted to a <b>drand</b> round chosen when voting opens. Nobody, including the contract, can read it before that round is public — and after that, anyone can decrypt it and reveal it in one transaction.',
-      howH2:'How it works', howP:'Timelock encryption first, as a sealed envelope — then exactly how <code>SealedDAO</code> uses it for a vote.',
-      envH3:'A sealed envelope that opens itself',
-      envP:'You write your choice, seal it, and hand it over in public. Anyone can see the envelope exists — nobody can see what\'s inside. When the clock you agreed on arrives, the lock opens on its own. Nobody has to come back and unlock it.',
-      env1b:'1', env1:'Seal — encrypt your choice to a moment in the future.',
-      env2b:'2', env2:'Wait — that moment arrives, on a public clock nobody controls.',
-      env3b:'3', env3:'Open — anyone can decrypt it and check it against your fingerprint.',
-      diagram:'    you                                       drand quicknet (League of Entropy)\n     |                                                    |\n     |-- seal(choice) → hash + ciphertext -->  <b>vote()</b>     round R not public yet\n     |                                           |\n     |                              <b>SealedDAO</b> stores only the hash and round R\n     |                                           |\n     |                              <-- round R published ------------------------|\n     |                                           |\n  anyone -- decrypt every vote, check hash --> <b>revealBatch()</b>  -->  tally, <b>finalize()</b>',
-      whyArcCol1:'Arc property', whyArcCol2:'What ArcSeal does with it',
-      whyArc1t:'Gas paid in USDC, 20 gwei floor', whyArc1d:'Sealing a vote costs about 0.0014 USDC, and the small fixed payment for revealing a vote is paid in the same unit it covers.',
-      whyArc2t:'Sub-second deterministic finality, no reorgs', whyArc2d:'A sealed vote is final on inclusion, so it can be counted right after the close with no confirmation depth to wait for.',
-      whyArc3t:'USDC is native and an ERC-20 at 0x3600…0000 (6 decimals)', whyArc3d:'The treasury and the gas are the same asset. Members hold only USDC, read only through its 6-decimal view.',
-      whyArc4t:'USDC blocklist reverts transfers', whyArc4d:'All payouts are pull-based (<code>claim</code>), never pushed, so a blocked recipient can never stall a proposal for anyone else.',
-      whyArc5t:'No VRF or timelock service on Arc', whyArc5d:'ArcSeal is greenfield: it brings its own timelock-encryption primitive instead of depending on one.',
-      votingH3:'How SealedDAO voting works',
-      step1b:'Propose', step1:'A member proposes a USDC transfer or a membership change, and picks a voting window from 10 minutes to 7 days.',
-      step2b:'Seal', step2:'Each member seals one vote — For, Against or Abstain — before the window closes. Only a hash and an encrypted blob are ever posted.',
-      step3b:'Close', step3:'Voting closes at a chosen drand round. From that instant, anyone can decrypt every sealed vote.',
-      step4b:'Reveal', step4:'Anyone decrypts every vote in their own browser and submits them in one transaction. When the proposal met quorum, a small fixed payment per revealed vote covers that transaction\'s gas.',
-      step5b:'Finalize', step5:'24 hours after the close, the tally is fixed: quorum is measured over sealed votes, and passing is measured over revealed votes.',
-      step6b:'Execute &amp; claim', step6:'A passed proposal can be executed within 7 days after the reveal window ends. Every payout is claimed by its own recipient — never pushed to them.',
-      privacyH3:'Privacy, stated plainly',
+      title:'ArcSeal: sealed voting on Arc',
+      desc:'Timelock-encrypted sealed voting on Arc. Every vote stays sealed until the drand round closes; after that, anyone can reveal them all.',
+      skip:'Skip to the walkthrough',
+      navWhy:'Why seal', navHow:'See it work', navAnatomy:'Anatomy', navProof:'Mainnet proof', navApp:'Open the app',
+      kicker:'Timelock-encrypted voting · live on Arc mainnet',
+      h1:'Every vote stays sealed <em>until the clock</em> opens it.',
+      heroP:'ArcSeal locks each vote to a future drand round. Nobody can read it while voting is open — not the other members, not the contract. When the round arrives, anyone can open every vote at once.',
+      ctaWatch:'Watch a vote, step by step ↓', ctaLive:'See the live DAO',
+      letterP:'PROPOSAL #1', letterR:'CLOSE ROUND N',
+      stat1:'USDC to seal a vote, gas included', stat2:'drand quicknet round period', stat3b:'10 min – 7 d', stat3:'voting window, set per proposal', stat4:'owners, relayers or upgrade keys',
+      whyH2:'An open tally <em>votes for you.</em>',
+      whyP:'Onchain votes are public the moment they land. The last voters see the score and follow it. ArcSeal keeps the score closed until everyone has voted.',
+      vsPlainH:'Ordinary onchain vote', vsPlainS:'TALLY PUBLIC WHILE OPEN', vsSealH:'With ArcSeal', vsSealS:'TALLY SEALED UNTIL ROUND N',
+      voter1:'Voter 1', voter2:'Voter 2', voter3:'Voter 3', voter4:'Voter 4', voter5:'Voter 5',
+      vFor:'For', vAgainst:'Against', vAbstain:'Abstain', vsOpen:'round opens all',
+      vsPlainN:'Voters 4 and 5 already know the score. Late voters follow the lead, and deals get made mid-vote.',
+      vsSealN:'Every voter decides blind. The score exists only once, at the close round, for everyone at the same time.',
+      simEyebrow:'Interactive · one proposal, start to finish', simH2:'Watch a vote <em>seal and open.</em>',
+      simMembers:'Members', mA:'Member A', mB:'Member B', mC:'Member C', rA:'proposer', rB:'member', rC:'member · recipient',
+      anyone:'Anyone', anyoneS:'clicks “Reveal votes”',
+      simStores:'What Arc stores', simProp:'Pay 1 USDC to member C', voteA:'vote · A', voteB:'vote · B', voteC:'vote · C',
+      simTally:'Public tally', simClock:'drand clock', simTreasury:'Treasury · USDC',
+      simFine:'Illustrative walkthrough: the real proofs on mainnet are below.',
+      anatH2:'Anatomy of <em>one sealed vote.</em>',
+      anatP:'Pick a choice and watch what your browser produces. Two things go onchain, one stays with you. The contract never opens the ciphertext; at reveal it only checks that the opened vote hashes back to the commitment.',
+      anatIn:'In your browser', anatChoice:'Your choice', anatSalt:'Random salt · 32 bytes', anatNew:'↻ new',
+      outCommit:'Commitment', outCommitT:'ONCHAIN · 32 BYTES', outCommitS:'keccak256(proposalId, voter, choice, salt). Hides the choice now, proves it later — the only thing the contract ever checks.',
+      outCipher:'Ciphertext', outCipherT:'ONCHAIN · OPENS AT ROUND N', outCipherS:'Nobody can open it before round N, and nobody needs you to open it after.',
+      outReceipt:'Receipt', outReceiptT:'STAYS IN YOUR BROWSER', outReceiptS:'Optional. It proves your own vote — which is also why ArcSeal is not coercion-resistant.',
+      anatFine:'Values here are illustrative. The real ones come from @arcseal/sdk in the app.',
+      gH2:'What the contract promises, <em>and keeps.</em>',
+      gP:'SealedDAO is immutable: no owner, no upgrade, no pause. Treasury token, quorum and reveal payment are fixed at deployment.',
+      g1h:'The hash rules', g1p:'The contract never parses a ciphertext and runs no onchain BLS check. It only compares hashes at reveal.',
+      g2h:'No relayer', g2p:'Any visitor or SDK script can reveal. Nothing in the protocol depends on this site.',
+      g3h:'Bad items never block', g3p:'Mismatched, unknown or duplicate items are skipped (<code>RevealSkipped</code>); the rest of the batch still lands.',
+      g4h:'Pull-only payouts', g4p:'Payouts are credited, then claimed by their own recipient. A blocklisted address stalls no one.',
+      g5h:'Quorum ≠ outcome', g5p:'Quorum counts sealed votes; passing counts revealed ones only. Ties fail. An unrevealed vote is never lost.',
+      g6h:'No drain without a pass', g6p:'The reveal payment is credited only for a proposal that met quorum, so a lone member cannot empty the treasury.',
+      arcEyebrow:'Built for Arc', arcH:'Why Arc.', arcP:'Arc has no VRF and no timelock service, so ArcSeal brings its own primitive — and leans on what Arc does have.',
+      arc1t:'Gas paid in USDC', arc1d:'Sealing a vote costs about 0.0014 USDC; the reveal payment is paid in the same unit the revealer spends.',
+      arc2t:'Deterministic finality', arc2d:'A sealed vote is final on inclusion, so it counts right after the close with no confirmation depth.',
+      arc3t:'Native USDC treasury', arc3d:'Treasury and gas are the same asset, read through the 6-decimal ERC-20 view at <code>0x3600…0000</code>.',
+      arc4t:'USDC blocklist', arc4d:'Pull-based <code>claim()</code> means a blocked recipient can never stall a proposal for anyone else.',
+      plainEyebrow:'Privacy, stated plainly',
+      plainBig:'Secret <em>during</em> voting. Public, per address, <em>forever</em> after. <span>This is not anonymity.</span>',
+      bandS:'Voting open · nobody can read any vote', bandO:'Anyone can decrypt · (voter, choice) public', bandL1:'propose', bandL2:'▲ close round N — reveal, finalize, execute',
       privacy1:'<b>Secrecy holds during voting.</b> Nobody — not other voters, not the contract, not ArcSeal\'s authors — can read a sealed vote\'s choice before its round is public. This relies on drand\'s League of Entropy threshold staying honest.',
       privacy2:'<b>From the close round on, anyone can decrypt every sealed vote from the chain;</b> after the reveal, each vote is public per address, permanently, in the event log.',
       privacy3:'<b>This is not anonymity.</b> If you need who voted, or how, to stay hidden after the fact, ArcSeal is not the right tool.',
       privacy4:'<b>It does not stop a willing seller.</b> Your vote receipt proves your choice to anyone you show it to, so ArcSeal is not coercion-resistant.',
-      builtH2:'What\'s built', builtP:'An open-source, MIT-licensed building block. No token, no sale, no yield, no prize, no chance — only a voting and treasury primitive.',
-      partCol:'Part', whatCol:'What it does', testsCol:'Tests',
-      part1:'Abstract primitive: hash commitments keyed to a drand round, reveal by hash, no owner, never deployed alone', part1n:'part of the suite below',
-      part2:'Member-list DAO: sealed voting, USDC treasury, pull-based payouts', part2n:'173 tests (3 fork tests skipped)',
+      proofH2:'Proven on mainnet.', sourcify:'Arc 5042 · Sourcify exact match ↗',
+      stP:'PROPOSED', stS:'SEALED', stR:'REVEALED', stF:'FINALIZED', stE:'EXECUTED',
+      p1t:'Pay 1 USDC', p1n:'3 of 3 revealed through the site\'s button · <a href="https://explorer.arc.io/tx/0x66e70f35000463ec17d28acfa7d035b2ca3ab81af332f44a50026dc41b828320">reveal tx</a>',
+      p2t:'Add a member', p2n:'2 of 2 revealed through the site\'s button · <a href="https://explorer.arc.io/tx/0x781c14ee4a48f51c99fd3e161f9dafe2bc569b38812959b077fe486ccfb12319">reveal tx</a>',
+      p3k:'PROPOSAL 3 · below quorum', p3t:'Fails by design', p3n:'1 revealed, 1 garbage item skipped, no payment · <a href="https://explorer.arc.io/tx/0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2">reveal tx</a>',
+      proofFine:'Hollow = pending. Finalize and execute open when the 24 h reveal window ends (2026-09-19 14:08 UTC). The proof DAO\'s members are wallets the author controls.',
+      builtH:'What\'s built', docsH:'Read more',
+      part1:'Abstract primitive: hash commitments keyed to a drand round, reveal by hash, no owner', part1n:'in the suite below',
+      part2:'Member-list DAO: sealed voting, USDC treasury, pull-based payouts', part2n:'173 tests',
       part3:'Vendored tlock-js, quicknet only, Node and browser', part3n:'72 tests',
       part4:'seal, unseal, reveal-all, viem actions for every contract call', part4n:'129 tests',
       part5:'Static site: proposals, voting, reveal, treasury', part5n:'77 tests',
-      statusLine:'Status: live on Arc mainnet; proofs close on 2026-09-19',
-      statusP:'<code>SealedDAO</code> is deployed and Sourcify-verified on Arc mainnet. All six sealed votes of the three proofs are revealed; finalize and execute follow when the 24 h reveal window ends (2026-09-19 14:08 UTC). The proof DAO\'s members are wallets the author controls.',
-      addr1:'SealedDAO', addr2:'Proof 1: USDC transfer, revealed and executed', addr3:'Proof 2: add a member', addr4:'Proof 3: quorum not met, a reveal skipped',
-      tbd1:'<a href="https://explorer.arc.io/address/0x789f7689efb75a1696c5a25d5ae97ac2cf6a2c44">0x789f…2c44</a>', tbd2:'3 of 3 revealed (<a href="https://explorer.arc.io/tx/0x66e70f35000463ec17d28acfa7d035b2ca3ab81af332f44a50026dc41b828320">reveal tx</a>); executes 2026-09-19', tbd3:'2 of 2 revealed (<a href="https://explorer.arc.io/tx/0x781c14ee4a48f51c99fd3e161f9dafe2bc569b38812959b077fe486ccfb12319">reveal tx</a>); executes 2026-09-19', tbd4:'1 revealed, 1 skipped (<a href="https://explorer.arc.io/tx/0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2">reveal tx</a>)',
-      docApp:'App', docAppS:'app/proposals/', docInt:'Integration guide', docIntS:'docs/integration/', docFaq:'FAQ', docFaqS:'docs/faq/', docSpec:'Spec summary', docSpecS:'docs/spec/',
-      docReadme:'README', docFullSpec:'Full spec', docThreats:'Threat model', docGas:'Gas costs', docLicense:'License (MIT)',
+      docApp:'App', docInt:'Integration guide', docFaq:'FAQ', docSpec:'Spec summary', docThreats:'Threat model', docGas:'Gas costs', docLicense:'License (MIT)',
+      footH:'Seal the next <em>decision.</em>',
       footL:'ArcSeal · MIT license · experimental, not externally audited',
       footR:'No token, no sale, no yield, no prize, no chance — a voting and treasury primitive only.',
-      title:'ArcSeal: sealed voting on Arc',
-      desc:'Timelock-encrypted sealed voting on Arc. Votes stay sealed until the round closes; after that, anyone can reveal them.'
+      sim:{
+        steps:['Propose','Seal','Wait for round N','Reveal','Execute'],
+        idle:'idle', proposed:'proposed', sealed:'✉ sealed', FOR:'FOR', AGAINST:'AGAINST',
+        prop:['OPEN','VOTING · 3/3 SEALED','CLOSED · AWAITING REVEAL','REVEALED · 2–1','PASSED · EXECUTED'],
+        noVote:'no vote yet', noVote2:'waiting for this member to seal', ct:'ciphertext ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ (tlock → N)', opened:'opened → {v} · keccak matches ✓',
+        tallyHidden:'sealed — nobody can compute it yet', quorum:'quorum: {n}/3 sealed', passing:'passing: revealed votes only',
+        dialSmall:['voting opens','votes arriving','round published','votes opened','closed'],
+        keyOff:'The key for round N does not exist yet.', keyOn:'Round N signature published — this is the decryption key.',
+        treasury:['Held by SealedDAO. Moves only through a passed proposal.','Held by SealedDAO. Moves only through a passed proposal.','Held by SealedDAO. Moves only through a passed proposal.','Quorum met, so the revealer is credited a fixed payment per valid vote.','1.00 USDC is now claimable by member C. The revealer claims its payment too.'],
+        captions:['Member A proposes paying 1 USDC to C. The close round N is fixed right now.','Each member seals a vote. Arc stores a hash and a ciphertext — nothing anyone can read.','drand publishes round N. Its signature is the key that opens every vote at once.','Anyone clicks Reveal. Votes decrypt in their browser and land in one transaction.','Passed 2–1. The transfer is credited, and C pulls it with claim().'],
+        play:'▶ Play', pause:'❚❚ Pause'
+      }
     },
     pt: {
-      skip:'Pular para como funciona', brand:'ArcSeal', brandSub:'na Arc',
-      navHow:'Como funciona', navPrivacy:'Privacidade', navBuilt:'O que foi construído',
-      kicker:'Votação selada para a Arc', tag:'Votos que ninguém consegue ler até a rodada fechar — e que qualquer pessoa pode revelar depois.',
-      ctaHow:'Ver como funciona', ctaGithub:'Ver no GitHub',
-      problemT:'O problema', problemD:'Votação pública tem um problema de efeito manada: uma contagem em andamento molda os votos antes de eles serem dados, e todo voto fica legível onchain no momento em que entra.',
-      solutionT:'A solução', solutionD:'Todo voto é cifrado com trava de tempo para uma rodada do <b>drand</b> escolhida quando a votação abre. Ninguém, nem o contrato, consegue lê-lo antes dessa rodada se tornar pública — e depois disso, qualquer pessoa pode descriptografá-lo e revelá-lo em uma única transação.',
-      howH2:'Como funciona', howP:'Primeiro a criptografia com trava de tempo, como um envelope selado — depois, exatamente como o <code>SealedDAO</code> a usa para um voto.',
-      envH3:'Um envelope selado que se abre sozinho',
-      envP:'Você escreve sua escolha, sela e entrega em público. Qualquer pessoa vê que o envelope existe — ninguém vê o que tem dentro. Quando chega o momento combinado, a trava se abre sozinha. Ninguém precisa voltar para destravá-la.',
-      env1b:'1', env1:'Selar — cifrar sua escolha para um momento no futuro.',
-      env2b:'2', env2:'Esperar — esse momento chega, num relógio público que ninguém controla.',
-      env3b:'3', env3:'Abrir — qualquer pessoa pode descriptografar e conferir contra a sua impressão digital.',
-      diagram:'    você                                      drand quicknet (League of Entropy)\n     |                                                    |\n     |-- seal(escolha) → hash + ciphertext -->  <b>vote()</b>   rodada R ainda não é pública\n     |                                           |\n     |                              <b>SealedDAO</b> guarda só o hash e a rodada R\n     |                                           |\n     |                              <-- rodada R publicada -----------------------|\n     |                                           |\n  qualquer um -- descriptografa e confere hash --> <b>revealBatch()</b>  -->  apuração, <b>finalize()</b>',
-      whyArcCol1:'Propriedade da Arc', whyArcCol2:'O que o ArcSeal faz com ela',
-      whyArc1t:'Gás pago em USDC, piso de 20 gwei', whyArc1d:'Selar um voto custa cerca de 0,0014 USDC, e o pequeno pagamento fixo por revelar um voto é pago na mesma unidade que ele cobre.',
-      whyArc2t:'Finalidade determinística em menos de um segundo, sem reorgs', whyArc2d:'Um voto selado é final assim que incluído, então pode ser contado logo após o fechamento, sem profundidade de confirmação para esperar.',
-      whyArc3t:'USDC é nativo e um ERC-20 em 0x3600…0000 (6 casas decimais)', whyArc3d:'O tesouro e o gás são o mesmo ativo. Membros só têm USDC, lido apenas pela sua visão de 6 casas decimais.',
-      whyArc4t:'A lista de bloqueio da USDC reverte transferências', whyArc4d:'Todo pagamento é sacado pelo próprio destinatário (<code>claim</code>), nunca enviado automaticamente, então um destinatário bloqueado nunca consegue travar uma proposta para mais ninguém.',
-      whyArc5t:'Sem VRF ou serviço de timelock na Arc', whyArc5d:'O ArcSeal parte do zero: ele traz o próprio primitivo de criptografia com trava de tempo em vez de depender de um serviço externo.',
-      votingH3:'Como funciona a votação do SealedDAO',
-      step1b:'Propor', step1:'Um membro propõe uma transferência em USDC ou uma mudança na lista de membros, e escolhe uma janela de votação entre 10 minutos e 7 dias.',
-      step2b:'Selar', step2:'Cada membro sela um voto — A favor, Contra ou Abstenção — antes da janela fechar. Só um hash e um blob cifrado são publicados.',
-      step3b:'Fechar', step3:'A votação fecha numa rodada do drand escolhida. A partir desse instante, qualquer pessoa pode descriptografar todos os votos selados.',
-      step4b:'Revelar', step4:'Qualquer pessoa descriptografa todos os votos no próprio navegador e os envia em uma única transação. Quando a proposta atingiu o quórum, um pequeno pagamento fixo por voto revelado cobre o gás dessa transação.',
-      step5b:'Finalizar', step5:'24 horas depois do fechamento, a apuração é fixada: o quórum é medido sobre os votos selados, e a aprovação é medida sobre os votos revelados.',
-      step6b:'Executar e resgatar', step6:'Uma proposta aprovada pode ser executada em até 7 dias após o fim da janela de revelação. Todo pagamento é resgatado pelo próprio destinatário, nunca enviado automaticamente.',
-      privacyH3:'Privacidade, dita sem rodeios',
+      title:'ArcSeal: votação selada na Arc',
+      desc:'Votação selada com criptografia de tempo na Arc. Cada voto fica selado até a rodada do drand fechar; depois disso, qualquer pessoa pode revelar todos.',
+      skip:'Pular para a demonstração',
+      navWhy:'Por que selar', navHow:'Veja funcionar', navAnatomy:'Anatomia', navProof:'Prova na mainnet', navApp:'Abrir o app',
+      kicker:'Votação com trava de tempo · no ar na mainnet da Arc',
+      h1:'Todo voto fica selado <em>até o relógio</em> abri-lo.',
+      heroP:'O ArcSeal tranca cada voto numa rodada futura do drand. Ninguém consegue lê-lo enquanto a votação está aberta — nem os outros membros, nem o contrato. Quando a rodada chega, qualquer pessoa abre todos os votos de uma vez.',
+      ctaWatch:'Veja um voto, passo a passo ↓', ctaLive:'Ver a DAO no ar',
+      letterP:'PROPOSTA #1', letterR:'RODADA DE FECHAMENTO N',
+      stat1:'USDC para selar um voto, gás incluso', stat2:'intervalo entre rodadas do drand quicknet', stat3b:'10 min – 7 d', stat3:'janela de votação, definida por proposta', stat4:'donos, relayers ou chaves de upgrade',
+      whyH2:'Placar aberto <em>vota por você.</em>',
+      whyP:'Votos onchain ficam públicos no instante em que entram. Quem vota por último vê o placar e segue a maioria. O ArcSeal mantém o placar fechado até todo mundo votar.',
+      vsPlainH:'Votação onchain comum', vsPlainS:'PLACAR PÚBLICO DURANTE A VOTAÇÃO', vsSealH:'Com ArcSeal', vsSealS:'PLACAR SELADO ATÉ A RODADA N',
+      voter1:'Eleitor 1', voter2:'Eleitor 2', voter3:'Eleitor 3', voter4:'Eleitor 4', voter5:'Eleitor 5',
+      vFor:'A favor', vAgainst:'Contra', vAbstain:'Abstenção', vsOpen:'a rodada abre tudo',
+      vsPlainN:'Os eleitores 4 e 5 já sabem o placar. Quem vota tarde segue quem está ganhando, e acordos acontecem no meio da votação.',
+      vsSealN:'Cada eleitor decide às cegas. O placar só existe uma vez, na rodada de fechamento, para todos ao mesmo tempo.',
+      simEyebrow:'Interativo · uma proposta, do início ao fim', simH2:'Veja um voto <em>selar e abrir.</em>',
+      simMembers:'Membros', mA:'Membro A', mB:'Membro B', mC:'Membro C', rA:'propositor', rB:'membro', rC:'membro · destinatário',
+      anyone:'Qualquer pessoa', anyoneS:'clica em “Revelar votos”',
+      simStores:'O que a Arc guarda', simProp:'Pagar 1 USDC ao membro C', voteA:'voto · A', voteB:'voto · B', voteC:'voto · C',
+      simTally:'Placar público', simClock:'relógio drand', simTreasury:'Tesouro · USDC',
+      simFine:'Demonstração ilustrativa: as provas reais na mainnet estão mais abaixo.',
+      anatH2:'Anatomia de <em>um voto selado.</em>',
+      anatP:'Escolha uma opção e veja o que o seu navegador produz. Duas coisas vão para a chain, uma fica com você. O contrato nunca abre o ciphertext; na revelação ele só confere se o voto aberto gera o mesmo hash do compromisso.',
+      anatIn:'No seu navegador', anatChoice:'Sua escolha', anatSalt:'Salt aleatório · 32 bytes', anatNew:'↻ novo',
+      outCommit:'Compromisso', outCommitT:'ONCHAIN · 32 BYTES', outCommitS:'keccak256(proposalId, voter, choice, salt). Esconde a escolha agora e a prova depois — a única coisa que o contrato confere.',
+      outCipher:'Ciphertext', outCipherT:'ONCHAIN · ABRE NA RODADA N', outCipherS:'Ninguém consegue abri-lo antes da rodada N, e ninguém precisa de você para abri-lo depois.',
+      outReceipt:'Comprovante', outReceiptT:'FICA NO SEU NAVEGADOR', outReceiptS:'Opcional. Prova o seu próprio voto — e é por isso que o ArcSeal não resiste a coerção.',
+      anatFine:'Os valores aqui são ilustrativos. Os reais vêm do @arcseal/sdk no app.',
+      gH2:'O que o contrato promete, <em>e cumpre.</em>',
+      gP:'O SealedDAO é imutável: sem dono, sem upgrade, sem pausa. Token do tesouro, quórum e pagamento de revelação são fixados no deploy.',
+      g1h:'O hash manda', g1p:'O contrato nunca interpreta um ciphertext nem faz verificação BLS onchain. Ele só compara hashes na revelação.',
+      g2h:'Sem relayer', g2p:'Qualquer visitante ou script com o SDK pode revelar. Nada no protocolo depende deste site.',
+      g3h:'Item ruim não trava', g3p:'Itens que não batem, desconhecidos ou duplicados são pulados (<code>RevealSkipped</code>); o resto do lote entra.',
+      g4h:'Pagamentos por saque', g4p:'Pagamentos são creditados e sacados pelo próprio destinatário. Um endereço bloqueado não trava ninguém.',
+      g5h:'Quórum ≠ resultado', g5p:'O quórum conta votos selados; a aprovação conta só os revelados. Empate reprova. Voto não revelado nunca se perde.',
+      g6h:'Sem drenar o tesouro', g6p:'O pagamento de revelação só é creditado em proposta que atingiu quórum, então um membro sozinho não esvazia o tesouro.',
+      arcEyebrow:'Feito para a Arc', arcH:'Por que a Arc.', arcP:'A Arc não tem VRF nem serviço de timelock, então o ArcSeal traz o próprio primitivo — e se apoia no que a Arc tem.',
+      arc1t:'Gás pago em USDC', arc1d:'Selar um voto custa cerca de 0,0014 USDC; o pagamento de revelação sai na mesma moeda que quem revela gasta.',
+      arc2t:'Finalidade determinística', arc2d:'Um voto selado é final ao entrar no bloco, então conta logo após o fechamento, sem esperar confirmações.',
+      arc3t:'Tesouro em USDC nativo', arc3d:'Tesouro e gás são o mesmo ativo, lido pela interface ERC-20 de 6 casas em <code>0x3600…0000</code>.',
+      arc4t:'Lista de bloqueio do USDC', arc4d:'O <code>claim()</code> por saque garante que um destinatário bloqueado nunca trava a proposta de ninguém.',
+      plainEyebrow:'Privacidade, sem rodeios',
+      plainBig:'Secreto <em>durante</em> a votação. Público, por endereço, <em>para sempre</em> depois. <span>Isso não é anonimato.</span>',
+      bandS:'Votação aberta · ninguém lê voto nenhum', bandO:'Qualquer um decifra · (eleitor, escolha) públicos', bandL1:'proposta', bandL2:'▲ rodada de fechamento N — revelar, finalizar, executar',
       privacy1:'<b>O sigilo vale durante a votação.</b> Ninguém — nem outros eleitores, nem o contrato, nem os autores do ArcSeal — consegue ler a escolha de um voto selado antes de sua rodada se tornar pública. Isso depende de o limiar do League of Entropy do drand continuar honesto.',
       privacy2:'<b>A partir da rodada de fechamento, qualquer pessoa pode decifrar todos os votos selados a partir da chain;</b> depois da revelação, cada voto fica público por endereço, para sempre, no log de eventos.',
       privacy3:'<b>Isso não é anonimato.</b> Se você precisa que quem votou, ou como, fique oculto depois da votação, o ArcSeal não é a ferramenta certa.',
       privacy4:'<b>Não impede quem quer vender o voto.</b> O comprovante do seu voto prova a sua escolha para quem você mostrar, então o ArcSeal não resiste a coerção.',
-      builtH2:'O que foi construído', builtP:'Um bloco de construção open-source, licenciado em MIT. Sem token, sem venda, sem rendimento, sem prêmio, sem sorteio — só um primitivo de votação e tesouraria.',
-      partCol:'Parte', whatCol:'O que faz', testsCol:'Testes',
-      part1:'Primitivo abstrato: compromissos hash vinculados a uma rodada do drand, revelação por hash, sem dono, nunca implantado sozinho', part1n:'parte da suíte abaixo',
-      part2:'DAO com lista de membros: votação selada, tesouro em USDC, pagamentos pull-based', part2n:'173 testes (3 de fork pulados)',
+      proofH2:'Provado na mainnet.', sourcify:'Arc 5042 · verificação exata no Sourcify ↗',
+      stP:'PROPOSTA', stS:'SELADA', stR:'REVELADA', stF:'FINALIZADA', stE:'EXECUTADA',
+      p1t:'Pagar 1 USDC', p1n:'3 de 3 revelados pelo botão do site · <a href="https://explorer.arc.io/tx/0x66e70f35000463ec17d28acfa7d035b2ca3ab81af332f44a50026dc41b828320">tx da revelação</a>',
+      p2t:'Adicionar um membro', p2n:'2 de 2 revelados pelo botão do site · <a href="https://explorer.arc.io/tx/0x781c14ee4a48f51c99fd3e161f9dafe2bc569b38812959b077fe486ccfb12319">tx da revelação</a>',
+      p3k:'PROPOSTA 3 · abaixo do quórum', p3t:'Reprova de propósito', p3n:'1 revelado, 1 item inválido pulado, sem pagamento · <a href="https://explorer.arc.io/tx/0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2">tx da revelação</a>',
+      proofFine:'Vazio = pendente. Finalizar e executar liberam quando a janela de revelação de 24 h termina (19/09/2026, 11:08 no horário de Brasília). Os membros da DAO de prova são carteiras controladas pelo autor.',
+      builtH:'O que foi construído', docsH:'Leia mais',
+      part1:'Primitivo abstrato: compromissos hash vinculados a uma rodada do drand, revelação por hash, sem dono', part1n:'na suíte abaixo',
+      part2:'DAO com lista de membros: votação selada, tesouro em USDC, pagamentos por saque', part2n:'173 testes',
       part3:'tlock-js vendorizado, só quicknet, Node e navegador', part3n:'72 testes',
       part4:'seal, unseal, reveal-all, ações viem para cada chamada do contrato', part4n:'129 testes',
       part5:'Site estático: propostas, votação, revelação, tesouraria', part5n:'77 testes',
-      statusLine:'Status: no ar na mainnet da Arc; provas fecham em 19/09/2026',
-      statusP:'O <code>SealedDAO</code> está implantado e verificado no Sourcify na mainnet da Arc. Os seis votos selados das três provas já foram revelados; a finalização e a execução vêm quando a janela de revelação de 24 h termina (19/09/2026, 11:08 no horário de Brasília). Os membros da DAO de prova são carteiras controladas pelo autor.',
-      addr1:'SealedDAO', addr2:'Prova 1: transferência em USDC, revelada e executada', addr3:'Prova 2: adicionar um membro', addr4:'Prova 3: quórum não atingido, uma revelação pulada',
-      tbd1:'<a href="https://explorer.arc.io/address/0x789f7689efb75a1696c5a25d5ae97ac2cf6a2c44">0x789f…2c44</a>', tbd2:'3 de 3 revelados (<a href="https://explorer.arc.io/tx/0x66e70f35000463ec17d28acfa7d035b2ca3ab81af332f44a50026dc41b828320">tx da revelação</a>); executa em 19/09', tbd3:'2 de 2 revelados (<a href="https://explorer.arc.io/tx/0x781c14ee4a48f51c99fd3e161f9dafe2bc569b38812959b077fe486ccfb12319">tx da revelação</a>); executa em 19/09', tbd4:'1 revelado, 1 pulado (<a href="https://explorer.arc.io/tx/0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2">tx da revelação</a>)',
-      docApp:'App', docAppS:'app/proposals/', docInt:'Guia de integração', docIntS:'docs/integration/', docFaq:'Perguntas frequentes', docFaqS:'docs/faq/', docSpec:'Resumo técnico', docSpecS:'docs/spec/',
-      docReadme:'README', docFullSpec:'Spec completa', docThreats:'Modelo de ameaças', docGas:'Custos de gás', docLicense:'Licença (MIT)',
+      docApp:'App', docInt:'Guia de integração', docFaq:'Perguntas frequentes', docSpec:'Resumo técnico', docThreats:'Modelo de ameaças', docGas:'Custos de gás', docLicense:'Licença (MIT)',
+      footH:'Sele a próxima <em>decisão.</em>',
       footL:'ArcSeal · licença MIT · experimental, sem auditoria externa',
       footR:'Sem token, sem venda, sem rendimento, sem prêmio, sem sorteio — só um primitivo de votação e tesouraria.',
-      title:'ArcSeal: votação selada na Arc',
-      desc:'Votação selada com criptografia de trava de tempo na Arc. Os votos ficam selados até a rodada fechar; depois disso, qualquer pessoa pode revelá-los.'
+      sim:{
+        steps:['Propor','Selar','Esperar a rodada N','Revelar','Executar'],
+        idle:'aguardando', proposed:'propôs', sealed:'✉ selado', FOR:'A FAVOR', AGAINST:'CONTRA',
+        prop:['ABERTA','VOTAÇÃO · 3/3 SELADOS','FECHADA · AGUARDANDO REVELAÇÃO','REVELADA · 2–1','APROVADA · EXECUTADA'],
+        noVote:'nenhum voto ainda', noVote2:'esperando este membro selar', ct:'ciphertext ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ (tlock → N)', opened:'aberto → {v} · keccak confere ✓',
+        tallyHidden:'selado — ninguém consegue calcular ainda', quorum:'quórum: {n}/3 selados', passing:'aprovação: só votos revelados',
+        dialSmall:['votação abre','votos chegando','rodada publicada','votos abertos','encerrada'],
+        keyOff:'A chave da rodada N ainda não existe.', keyOn:'Assinatura da rodada N publicada — ela é a chave de decifragem.',
+        treasury:['Guardado pelo SealedDAO. Só sai por proposta aprovada.','Guardado pelo SealedDAO. Só sai por proposta aprovada.','Guardado pelo SealedDAO. Só sai por proposta aprovada.','Quórum atingido: quem revelou recebe um pagamento fixo por voto válido.','1,00 USDC agora pode ser sacado pelo membro C. Quem revelou também saca o seu pagamento.'],
+        captions:['O membro A propõe pagar 1 USDC a C. A rodada de fechamento N é fixada agora.','Cada membro sela um voto. A Arc guarda um hash e um ciphertext — nada que alguém consiga ler.','O drand publica a rodada N. A assinatura dela é a chave que abre todos os votos de uma vez.','Qualquer pessoa clica em Revelar. Os votos são decifrados no navegador dela e entram numa única transação.','Aprovada por 2–1. A transferência é creditada, e C saca com claim().'],
+        play:'▶ Reproduzir', pause:'❚❚ Pausar'
+      }
     }
   };
 
-  const buttons = { en: document.getElementById('lang-en'), pt: document.getElementById('lang-pt') };
-  const htmlRoot = document.getElementById('html-root');
-  const docTitle = document.getElementById('doc-title');
-  const docDesc = document.getElementById('doc-desc');
+  let lang = 'en';
+  const $ = (id) => document.getElementById(id);
 
-  function apply(lang) {
-    const dict = I18N[lang] || I18N.en;
-    document.querySelectorAll('[data-i18n]').forEach((el) => {
-      const key = el.getAttribute('data-i18n');
-      if (key in dict) el.innerHTML = dict[key];
+  /* ---------- simulator ---------- */
+  const STEP_MS = 4200;
+  const VOTES = ['FOR', 'FOR', 'AGAINST'];
+  const CODES = ['propose(TransferUSDC(C, 1e6), window)', 'vote(id, commitment, ciphertext)', 'drand quicknet · every 3 s', 'revealBatch(items)  // bad items skipped', 'finalize() → execute() → claim()'];
+  const DIAL = [0.04, 0.45, 1, 1, 1];
+  const DIAL_BIG = ['N − 1,200', 'N − 640', 'N', 'N', 'N'];
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let step = 0, t0 = performance.now(), playing = !reduce, raf = 0;
+  const tabs = $('sim-tabs');
+
+  function buildTabs() {
+    const S = I18N[lang].sim;
+    tabs.innerHTML = '';
+    S.steps.forEach((label, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tab';
+      b.innerHTML = '<span class="n">' + ['I.', 'II.', 'III.', 'IV.', 'V.'][i] + '</span><span class="l"></span><span class="p"></span>';
+      b.querySelector('.l').textContent = label;
+      b.addEventListener('click', () => { go(i); setPlaying(false); });
+      tabs.appendChild(b);
     });
-    htmlRoot.setAttribute('lang', lang === 'pt' ? 'pt-BR' : 'en');
-    docTitle.textContent = dict.title;
-    docDesc.setAttribute('content', dict.desc);
-    buttons.en.setAttribute('aria-pressed', String(lang === 'en'));
-    buttons.pt.setAttribute('aria-pressed', String(lang === 'pt'));
   }
 
+  function chip(el, cls, text) { el.className = 'chip' + (cls ? ' ' + cls : ''); el.textContent = text; }
+
+  function render() {
+    const S = I18N[lang].sim, s = step;
+    [...tabs.children].forEach((b, i) => {
+      b.classList.toggle('on', i === s);
+      b.classList.toggle('done', i < s);
+      b.setAttribute('aria-current', i === s ? 'step' : 'false');
+      if (i !== s) b.querySelector('.p').style.width = i < s ? '100%' : '0';
+    });
+    if (!playing) tabs.children[s].querySelector('.p').style.width = '100%';
+
+    VOTES.forEach((v, i) => {
+      const cls = v === 'FOR' ? 'for' : 'against';
+      if (s === 0) chip($('chip-' + i), '', i === 0 ? S.proposed : S.idle);
+      else if (s < 3) chip($('chip-' + i), 'sealed', S.sealed);
+      else chip($('chip-' + i), cls, S[v]);
+      const row = $('led-' + i);
+      row.classList.toggle('in', s >= 1);
+      row.classList.toggle('open', s >= 3);
+      const c1 = row.querySelector('[data-c]');
+      c1.textContent = s === 0 ? S.noVote : c1.dataset.c;
+      row.querySelector('.c2').textContent = s === 0 ? S.noVote2 : s >= 3 ? S.opened.replace('{v}', S[v]) : S.ct;
+      if (s >= 3) chip(row.querySelector(':scope > .chip'), cls, S[v]);
+      else chip(row.querySelector(':scope > .chip'), s === 0 ? '' : 'sealed', s === 0 ? '—' : 'SEALED');
+    });
+    $('revealer').classList.toggle('on', s >= 3);
+
+    const ps = $('prop-status');
+    ps.textContent = S.prop[s];
+    ps.className = 'status' + (s === 4 ? ' wax' : s >= 2 ? ' dark' : '');
+
+    const bar = $('tally-bar');
+    if (s < 3) {
+      bar.className = 'tally-bar hidden';
+      bar.textContent = S.tallyHidden;
+      $('tally-note').textContent = S.quorum.replace('{n}', s >= 1 ? '3' : '0');
+    } else {
+      bar.className = 'tally-bar';
+      bar.innerHTML = '<div class="f"></div><div class="a"></div>';
+      bar.children[0].textContent = S.FOR + ' 2';
+      bar.children[1].textContent = S.AGAINST + ' 1';
+      $('tally-note').textContent = S.passing;
+    }
+
+    $('dial-arc').setAttribute('stroke-dashoffset', (540.4 * (1 - DIAL[s])).toFixed(1));
+    $('dial-big').textContent = DIAL_BIG[s];
+    $('dial-small').textContent = S.dialSmall[s];
+    $('key').classList.toggle('on', s >= 2);
+    $('key-text').textContent = s >= 2 ? S.keyOn : S.keyOff;
+    $('treasury').textContent = s === 4 ? (lang === 'pt' ? '1,00' : '1.00') : (lang === 'pt' ? '2,00' : '2.00');
+    $('treasury-note').textContent = S.treasury[s];
+    $('caption').textContent = S.captions[s];
+    $('code').textContent = CODES[s];
+    $('sim-play').textContent = playing ? S.pause : S.play;
+  }
+
+  function go(i) { step = (i + 5) % 5; t0 = performance.now(); render(); }
+  function setPlaying(p) { playing = p; t0 = performance.now(); render(); if (p) loop(); }
+  function loop() {
+    cancelAnimationFrame(raf);
+    const tick = (now) => {
+      if (!playing) return;
+      const k = (now - t0) / STEP_MS;
+      if (k >= 1) go(step + 1);
+      else tabs.children[step].querySelector('.p').style.width = (k * 100).toFixed(1) + '%';
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+  }
+  $('sim-prev').addEventListener('click', () => { setPlaying(false); go(step - 1); });
+  $('sim-next').addEventListener('click', () => { setPlaying(false); go(step + 1); });
+  $('sim-play').addEventListener('click', () => setPlaying(!playing));
+
+  // Only animate while the walkthrough is on screen.
+  let visible = false;
+  new IntersectionObserver((entries) => {
+    visible = entries[0].isIntersecting;
+    if (visible && playing) { t0 = performance.now(); loop(); } else cancelAnimationFrame(raf);
+  }, { threshold: 0.25 }).observe(document.querySelector('.sim'));
+
+  /* ---------- anatomy ---------- */
+  function hex(s, n) {
+    let out = '', h = 2166136261;
+    for (let k = 0; out.length < n; k++) {
+      for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+      h ^= k; h = Math.imul(h, 16777619);
+      out += ('00000000' + (h >>> 0).toString(16)).slice(-8);
+    }
+    return out.slice(0, n);
+  }
+  let choice = 'For', seed = Math.floor(Math.random() * 1e9);
+  function anatomy(flash) {
+    const salt = hex('salt' + seed, 64);
+    $('salt').textContent = '0x' + salt;
+    $('commit').textContent = '0x' + hex('commit|1|0x47bD|' + choice + '|' + salt, 64);
+    $('cipher').textContent = 'age-encryption.org/v1 → tlock N ' + hex('ct|' + choice + '|' + salt, 72) + '…';
+    $('receipt').textContent = '{ proposalId: 1, choice: "' + choice + '", salt: 0x' + salt.slice(0, 8) + '… }';
+    if (flash && !reduce) {
+      ['commit', 'receipt'].forEach((id) => {
+        const el = $(id);
+        el.classList.add('flash');
+        setTimeout(() => el.classList.remove('flash'), 350);
+      });
+    }
+  }
+  document.querySelectorAll('[data-choice]').forEach((b) => {
+    b.addEventListener('click', () => {
+      choice = b.dataset.choice;
+      document.querySelectorAll('[data-choice]').forEach((x) => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+      anatomy(true);
+    });
+  });
+  $('reroll').addEventListener('click', () => { seed++; anatomy(true); });
+
+  /* ---------- i18n ---------- */
+  const buttons = { en: $('lang-en'), pt: $('lang-pt') };
+  function apply(l) {
+    lang = l;
+    const dict = I18N[l];
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      const v = dict[el.dataset.i18n];
+      if (typeof v === 'string') el.innerHTML = v;
+    });
+    $('html-root').setAttribute('lang', l === 'pt' ? 'pt-BR' : 'en');
+    $('doc-title').textContent = dict.title;
+    $('doc-desc').setAttribute('content', dict.desc);
+    buttons.en.setAttribute('aria-pressed', String(l === 'en'));
+    buttons.pt.setAttribute('aria-pressed', String(l === 'pt'));
+    buildTabs();
+    render();
+  }
   function readStoredLang() {
     try {
       const v = localStorage.getItem(STORAGE_KEY);
-      return v === 'pt' || v === 'en' ? v : null;
-    } catch {
-      return null;
-    }
+      if (v === 'en' || v === 'pt') return v;
+    } catch (_) {}
+    return (navigator.language || '').toLowerCase().startsWith('pt') ? 'pt' : 'en';
   }
-
-  function storeLang(lang) {
-    try {
-      localStorage.setItem(STORAGE_KEY, lang);
-    } catch {
-      /* private mode or blocked storage: language still applies for this view */
-    }
+  function setLang(l) {
+    apply(l);
+    try { localStorage.setItem(STORAGE_KEY, l); } catch (_) {}
   }
-
-  function setLang(lang) {
-    apply(lang);
-    storeLang(lang);
-  }
-
   buttons.en.addEventListener('click', () => setLang('en'));
   buttons.pt.addEventListener('click', () => setLang('pt'));
 
-  const initial = readStoredLang() || 'en';
-  apply(initial);
+  apply(readStoredLang());
+  anatomy(false);
 })();
 </script>
 </body>
