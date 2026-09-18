@@ -14,7 +14,7 @@
       "deployBlock": 21508506,
       "deployTx": "0xf583c2a2be72d010465b4ea7cd70cd48ffeab8ee26dc2878a8e0f0838aae2287",
       "verified": true,
-      "commit": null,
+      "commit": "437a0a16f8a22e43018c19d598fd9e89e3116d98",
       "deployer": "0x39a7b6fa1597bb6657fe84e64e3b836c37d6f75d",
       "salt": "keccak256(\"arcseal.v1\")",
       "saltHash": "0xab625800dd8b6a1ec1cafaa199bb72f27c5482aec13bf092272907043180863e",
