@@ -1,0 +1,26 @@
+{
+  "genesis": 1692803367,
+  "period": 3,
+  "vectors": [
+    { "timestamp": 1692803367, "roundAt": 1, "roundAfter": 1, "roundTime": 1692803367 },
+    { "timestamp": 1692803368, "roundAt": 1, "roundAfter": 2, "roundTime": 1692803367 },
+    { "timestamp": 1692803369, "roundAt": 1, "roundAfter": 2, "roundTime": 1692803367 },
+    { "timestamp": 1692803370, "roundAt": 2, "roundAfter": 2, "roundTime": 1692803370 },
+    { "timestamp": 1692803371, "roundAt": 2, "roundAfter": 3, "roundTime": 1692803370 },
+    { "timestamp": 1789732800, "roundAt": 32309812, "roundAfter": 32309812, "roundTime": 1789732800 },
+    { "timestamp": 1790812800, "roundAt": 32669812, "roundAfter": 32669812, "roundTime": 1790812800 },
+    { "timestamp": 1791387001, "roundAt": 32861212, "roundAfter": 32861213, "roundTime": 1791387000 },
+    { "timestamp": 1792036740, "roundAt": 33077792, "roundAfter": 33077792, "roundTime": 1792036740 },
+    { "timestamp": 1793491199, "roundAt": 33562611, "roundAfter": 33562612, "roundTime": 1793491197 },
+    { "timestamp": 1797803363, "roundAt": 34999999, "roundAfter": 35000000, "roundTime": 1797803361 },
+    { "timestamp": 1797803364, "roundAt": 35000000, "roundAfter": 35000000, "roundTime": 1797803364 },
+    { "timestamp": 1797803365, "roundAt": 35000000, "roundAfter": 35000001, "roundTime": 1797803364 },
+    { "timestamp": 1893456000, "roundAt": 66884212, "roundAfter": 66884212, "roundTime": 1893456000 },
+    { "timestamp": 2147483648, "roundAt": 151560094, "roundAfter": 151560095, "roundTime": 2147483646 },
+    { "timestamp": 2538895501, "roundAt": 282030712, "roundAfter": 282030713, "roundTime": 2538895500 },
+    { "timestamp": 3320414402, "roundAt": 542537012, "roundAfter": 542537013, "roundTime": 3320414400 },
+    { "timestamp": 4102444799, "roundAt": 803213811, "roundAfter": 803213812, "roundTime": 4102444797 },
+    { "timestamp": 4102444800, "roundAt": 803213812, "roundAfter": 803213812, "roundTime": 4102444800 },
+    { "timestamp": 9000000000000001, "roundAt": 2999999435732212, "roundAfter": 2999999435732213, "roundTime": 9000000000000000 }
+  ]
+}

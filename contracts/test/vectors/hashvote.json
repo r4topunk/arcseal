@@ -1,0 +1,16 @@
+{
+  "encoding": "keccak256(abi.encode(uint256 proposalId, address voter, uint8 choice, bytes32 salt))",
+  "choices": "0 = Abstain, 1 = For, 2 = Against",
+  "vectors": [
+    { "proposalId": "0", "voter": "0x0000000000000000000000000000000000000000", "choice": 0, "salt": "0x0000000000000000000000000000000000000000000000000000000000000000", "commitment": "0x012893657d8eb2efad4de0a91bcd0e39ad9837745dec3ea923737ea803fc8e3d" },
+    { "proposalId": "115792089237316195423570985008687907853269984665640564039457584007913129639935", "voter": "0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF", "choice": 2, "salt": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "commitment": "0x5337131ce5e64116e29eeacdc994cf5c5ea0c4e8ddb4358965aa70e6cc1a1b36" },
+    { "proposalId": "1", "voter": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", "choice": 1, "salt": "0x7f03d7f6c28f22eb389f3b2b3f8000e0bd10814b592bcbec14a2bfaedc522b4e", "commitment": "0x0836fa805c79dc993147f1e959ba5b9e3e460cefe9500469b9c92c56950c6b51" },
+    { "proposalId": "1", "voter": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", "choice": 2, "salt": "0x7f03d7f6c28f22eb389f3b2b3f8000e0bd10814b592bcbec14a2bfaedc522b4e", "commitment": "0xec7d5cd7072c8343d28c721e4ec87dd2389664c3b0f39ffe8187e85595e2881e" },
+    { "proposalId": "1", "voter": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", "choice": 0, "salt": "0x7f03d7f6c28f22eb389f3b2b3f8000e0bd10814b592bcbec14a2bfaedc522b4e", "commitment": "0x299ba5b3fbcd325fef4cacca09c6d250bc8bbe5bed95d0481787632bb999bc3e" },
+    { "proposalId": "2", "voter": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", "choice": 1, "salt": "0x7f03d7f6c28f22eb389f3b2b3f8000e0bd10814b592bcbec14a2bfaedc522b4e", "commitment": "0x8a38bb1fa634bbe3ba9a88b840cd51a11ad8c4502252eb2d426b7dc7296bc522" },
+    { "proposalId": "1", "voter": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "choice": 1, "salt": "0x7f03d7f6c28f22eb389f3b2b3f8000e0bd10814b592bcbec14a2bfaedc522b4e", "commitment": "0x8b445afd308be1e1935b00b358466384736943fa98679c1a610327df387dd0ac" },
+    { "proposalId": "1", "voter": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", "choice": 1, "salt": "0xc2f72801714a1efab3ef59d252ad4a5273ddfdbeeaafcdf83564594b9f67d893", "commitment": "0x077581d71d5e29bdc1b83bd7758e9478b3ff94be0df5237379947219f437f967" },
+    { "proposalId": "18446744073709551616", "voter": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", "choice": 1, "salt": "0x0000000000000000000000000000000000000000000000000000000000000001", "commitment": "0x0b7d496ce48eee7b40c4b4c2d001c1b50c989021a540368fbbc2acb5ea731b7e" },
+    { "proposalId": "57896044618658097711785492504343953926634992332820282019728792003956564819968", "voter": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "choice": 2, "salt": "0x94e46800ccccf687e99e54b45119c4fb1237658ae0db0e6c092b46d02dda3978", "commitment": "0xf272774f1e6fd72ad421ca7c8bda494d4375fc73201cb3da34a7eee3dc0c8a73" }
+  ]
+}

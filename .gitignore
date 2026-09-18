@@ -1,0 +1,35 @@
+node_modules/
+dist/
+.next/
+out/
+coverage/
+*.log
+*.tsbuildinfo
+.DS_Store
+
+# env: only the example is committed
+.env
+.env.*
+!.env.example
+
+# key material never enters the repo (deploys use Foundry encrypted keystores in ~/.foundry/keystores)
+*.key
+keystore/
+keystores/
+
+# foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/*/31337/
+contracts/broadcast/**/dry-run/
+
+# browser tests: Playwright output and Vite caches (dist/ above also covers smoke-test builds such as test/browser/dist/)
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+.vite/
+
+# local runs: e2e script state and anvil deployment records
+scripts/.state/
+deployments/anvil-*.json

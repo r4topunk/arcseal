@@ -1,0 +1,49 @@
+{
+  "network": "arc-testnet",
+  "chainId": 5042002,
+  "rpcUrl": "https://rpc.testnet.arc.io",
+  "explorer": "https://explorer.testnet.arc.io",
+  "token": {
+    "symbol": "USDC",
+    "address": "0x3600000000000000000000000000000000000000",
+    "decimals": 6
+  },
+  "contracts": {
+    "SealedDAO": {
+      "address": null,
+      "deployBlock": null,
+      "deployTx": null,
+      "verified": false,
+      "commit": null,
+      "deployer": null,
+      "salt": "keccak256(\"arcseal.v1\")",
+      "saltHash": "0xab625800dd8b6a1ec1cafaa199bb72f27c5482aec13bf092272907043180863e",
+      "constructorArgs": {
+        "usdc": "0x3600000000000000000000000000000000000000",
+        "initialMembers": [],
+        "quorumBps": 5000,
+        "revealBounty": 10000
+      }
+    }
+  },
+  "proofTxs": {
+    "fundTreasury": null,
+    "transferPropose": null,
+    "transferVotes": null,
+    "transferRevealBatch": null,
+    "transferFinalize": null,
+    "transferExecute": null,
+    "transferClaim": null,
+    "transferBountyClaim": null,
+    "addMemberPropose": null,
+    "addMemberVotes": null,
+    "addMemberRevealBatch": null,
+    "addMemberFinalize": null,
+    "addMemberExecute": null,
+    "quorumFailPropose": null,
+    "quorumFailVote": null,
+    "quorumFailFinalize": null,
+    "revealBatchWithSkippedItem": null
+  },
+  "e2e": null
+}

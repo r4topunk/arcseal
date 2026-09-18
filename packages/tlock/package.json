@@ -1,0 +1,58 @@
+{
+  "name": "@arcseal/tlock",
+  "version": "0.1.0",
+  "description": "Vendored tlock-js 0.9.0 pinned to drand quicknet: timelock encryption for Node 22 and browsers",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "keywords": [
+    "arc",
+    "drand",
+    "quicknet",
+    "tlock",
+    "timelock-encryption"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/r4topunk/arcseal",
+    "directory": "packages/tlock"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE-tlock-js"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src test scripts",
+    "format": "biome check --write src test scripts",
+    "vectors:gen": "sh scripts/gen-vectors.sh"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "@types/node": "^24.13.5",
+    "playwright": "^1.63.0",
+    "tsup": "^8.5.1",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.0",
+    "vitest": "^4.1.11"
+  },
+  "dependencies": {
+    "@noble/curves": "1.4.0",
+    "@noble/hashes": "1.4.0",
+    "@stablelib/chacha20poly1305": "1.0.1"
+  }
+}

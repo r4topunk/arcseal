@@ -1,0 +1,30 @@
+{
+  "name": "arcseal",
+  "private": true,
+  "description": "ArcSeal: timelock-encrypted sealed voting on Arc (drand quicknet + tlock)",
+  "license": "MIT",
+  "packageManager": "pnpm@11.0.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm contracts:build && pnpm -r --if-present build",
+    "test": "pnpm contracts:test:ci && pnpm -r --if-present test",
+    "check": "pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm contracts:fmt && pnpm sdk:check-abi && pnpm contracts:snapshot:check",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm --filter '@arcseal/sdk...' build && pnpm -r --if-present typecheck",
+    "contracts:build": "cd contracts && forge build",
+    "contracts:test": "pnpm --filter '@arcseal/sdk...' build && cd contracts && forge test -vvv",
+    "contracts:test:ci": "pnpm --filter '@arcseal/sdk...' build && cd contracts && forge test",
+    "contracts:fmt": "cd contracts && forge fmt --check",
+    "contracts:snapshot": "cd contracts && forge snapshot --no-match-path 'test/{invariant,ffi,fork,audit}/*'",
+    "contracts:snapshot:check": "cd contracts && forge snapshot --check --tolerance 5 --no-match-path 'test/{invariant,ffi,fork,audit}/*'",
+    "contracts:abi": "cd contracts && forge build && cd .. && pnpm --filter @arcseal/sdk generate:abi",
+    "sdk:check-abi": "pnpm --filter @arcseal/sdk check:abi",
+    "e2e:testnet": "pnpm --filter '@arcseal/sdk...' build && pnpm --filter @arcseal/scripts e2e:testnet",
+    "e2e:dry-run": "pnpm contracts:build && pnpm --filter '@arcseal/sdk...' build && pnpm --filter @arcseal/scripts e2e:dry-run"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}

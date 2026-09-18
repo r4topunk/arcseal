@@ -1,0 +1,24 @@
+{
+  "chainHash": "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971",
+  "fetchedAt": "2026-09-18T04:34:26.482Z",
+  "beacons": [
+    {
+      "round": 30000000,
+      "randomness": "24fdbb00b10a967c392b5b708967011e996689994a2bf1c5573c3e372c2e844d",
+      "signature": "81d2fc112b91932d9e4074a46b88c4dc78149b859660e0673c0bb9bd0caefdc9cc194e83de980441355b8ef44cc7a355",
+      "source": "https://api.drand.sh/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/public/30000000"
+    },
+    {
+      "round": 31415926,
+      "randomness": "864f45aa88fbe38cb156883b2b1c1f090783b70dbc80620351a47016d9bac956",
+      "signature": "8278a670c04227df1b6d628e32211abcfdab41698f59bdc1bf9fee86e63d05e4771235f3f6acc8dd498b01d895226025",
+      "source": "https://api.drand.sh/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/public/31415926"
+    },
+    {
+      "round": 32000000,
+      "randomness": "ea1bdeb86e62a543551740bf792d78a296861de06a8bbd64b2b0e2134f40b166",
+      "signature": "b1c90cc3c290ae966b9b5230cd3c93389bd95ae0274f7dce8ef43979745fa747c72fbebe7ddafb79088120565d91b91f",
+      "source": "https://api.drand.sh/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/public/32000000"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "name": "@arcseal/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for ArcSeal: timelock-sealed votes on Arc (seal, unseal, round math, viem actions)",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "keywords": [
+    "arc",
+    "usdc",
+    "drand",
+    "tlock",
+    "timelock-encryption",
+    "sealed-voting",
+    "viem"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/r4topunk/arcseal",
+    "directory": "packages/sdk"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src test scripts",
+    "format": "biome check --write src test scripts",
+    "generate:abi": "node scripts/generate-abi.mjs",
+    "check:abi": "node scripts/generate-abi.mjs --check"
+  },
+  "peerDependencies": {
+    "viem": "^2.56.0"
+  },
+  "dependencies": {
+    "@arcseal/tlock": "workspace:*",
+    "pino": "^10.3.1",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "@types/node": "^24.13.5",
+    "playwright": "^1.63.0",
+    "tsup": "^8.5.1",
+    "typescript": "~5.9.3",
+    "viem": "^2.56.7",
+    "vite": "^8.3.0",
+    "vitest": "^4.1.11"
+  }
+}

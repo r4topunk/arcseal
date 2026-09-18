@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en" id="html-root">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title id="doc-title">ArcSeal: sealed voting on Arc</title>
+<meta id="doc-desc" name="description" content="Timelock-encrypted sealed voting on Arc. Votes stay sealed until the round closes; after that, anyone can reveal them.">
+<meta property="og:title" content="ArcSeal: sealed voting on Arc">
+<meta property="og:description" content="Timelock-encrypted sealed voting on Arc. Votes stay sealed until the round closes; after that, anyone can reveal them.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232F6BAE'/><text x='16' y='22' font-family='system-ui' font-size='17' font-weight='700' fill='white' text-anchor='middle'>A</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#FFFFFF; --raised:#FFFFFF; --sunk:#F2F4F7; --line:#DDE2E9; --line-soft:#EBEEF2;
+  --ink:#121826; --muted:#555F6D; --faint:#8A93A0;
+  --accent:#2F6BAE; --accent-soft:#E3ECF6; --on-accent:#FFFFFF;
+  --ok:#23734A; --warn:#94560F; --bad:#AE3D36;
+  --shadow:0 1px 2px rgba(20,40,70,.05),0 12px 32px -16px rgba(20,40,70,.18);
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r-lg:14px; --r-md:8px; --r-sm:4px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;padding-inline:16px}
+.wrap{max-width:1040px;margin:0 auto}
+h1,h2,h3{line-height:1.05;text-wrap:balance;margin:0;font-weight:600;letter-spacing:-.03em}
+p{margin:0;text-wrap:pretty}
+a{color:inherit}
+button,a{transition:background-color .2s ease,border-color .2s ease,color .2s ease,transform .12s ease}
+button{font:inherit;cursor:pointer}
+button:active:not(:disabled){transform:translateY(1px)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:8px 12px;border-radius:var(--r-sm)}
+.skip:focus{left:16px;z-index:10}
+.label{font-size:13px;color:var(--muted);font-weight:500}
+code{font-family:var(--mono);font-size:.92em;background:var(--sunk);padding:.05em .35em;border-radius:4px}
+
+/* top bar */
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-block:20px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+.brand{font-weight:600;letter-spacing:-.01em;text-decoration:none}
+.brand span{color:var(--faint);font-weight:400;margin-left:8px;font-size:14px}
+.top nav{display:flex;gap:20px;font-size:14px;align-items:center;flex-wrap:wrap}
+.top nav a{color:var(--muted);text-decoration:none}
+.top nav a:hover{color:var(--ink)}
+.langs{display:inline-flex;padding:3px;background:var(--sunk);border-radius:var(--r-md);gap:2px}
+.langs button{border:0;background:transparent;color:var(--muted);padding:6px 11px;font-size:13px;border-radius:6px;font-weight:500}
+.langs button:hover{color:var(--ink)}
+.langs button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(20,40,70,.12)}
+
+/* hero */
+.hero{padding-block:72px 64px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:start}
+.kicker{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.hero h1{font-size:clamp(46px,7.5vw,84px);letter-spacing:-.045em;margin-top:10px;line-height:.95}
+.hero .tag{font-size:21px;color:var(--muted);margin-top:16px;max-width:26ch;line-height:1.3}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+.hero dl{margin:0;display:grid;gap:22px;padding-top:34px}
+.hero dt{font-weight:600;font-size:14px}
+.hero dd{margin:4px 0 0;color:var(--muted);max-width:52ch}
+.hero dd b{color:var(--ink);font-weight:600}
+
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:transparent;color:var(--ink);padding:9px 14px;border-radius:var(--r-md);font-size:14px;font-weight:500;text-decoration:none}
+.btn:hover:not(:disabled){border-color:var(--ink);background:var(--sunk)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover:not(:disabled){background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* section heads */
+.sec{padding-block:56px;border-top:1px solid var(--ink);scroll-margin-top:16px}
+.sec-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:40px;margin-bottom:28px;align-items:end}
+.sec-head h2{font-size:clamp(28px,4vw,38px)}
+.sec-head p{color:var(--muted);max-width:52ch}
+
+/* envelope + diagram */
+.how-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:24px;margin-bottom:32px}
+.envelope{background:var(--raised);border-radius:var(--r-lg);box-shadow:var(--shadow);outline:1px solid var(--line-soft);padding:24px}
+.envelope .icon{width:44px;height:44px;border-radius:var(--r-md);background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;margin-bottom:16px}
+.envelope h3{font-size:17px;margin-bottom:10px}
+.envelope p{color:var(--muted);font-size:15px}
+.env-steps{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:10px}
+.env-steps li{font-size:13px;color:var(--muted);display:flex;gap:10px;align-items:baseline}
+.env-steps b{color:var(--ink);font-family:var(--mono);font-size:12px;flex:none;width:1.4em}
+.diagram-wrap{background:var(--sunk);border-radius:var(--r-lg);padding:20px;overflow-x:auto;display:flex;align-items:center}
+.diagram{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre;line-height:1.7;margin:0}
+.diagram b{color:var(--ink);font-weight:600}
+
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:15px}
+th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+thead th{font-size:13px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--line)}
+tbody th{font-weight:600;white-space:nowrap}
+td code,.mono{font-family:var(--mono);font-size:13px}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* voting steps */
+.steps{list-style:none;margin:28px 0 0;padding:0;counter-reset:step;display:grid;gap:0}
+.steps li{padding-block:16px;border-top:1px solid var(--line);display:grid;grid-template-columns:2.2em minmax(0,1fr);gap:14px}
+.steps li::before{counter-increment:step;content:counter(step);font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:600}
+.steps b{display:block;font-weight:600;margin-bottom:2px}
+.steps span{color:var(--muted);font-size:15px}
+
+/* privacy panel */
+.privacy{background:var(--ink);color:#fff;border-radius:var(--r-lg);padding:32px;margin-top:40px}
+.privacy h3{font-size:22px;color:#fff;margin-bottom:16px}
+.privacy ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.privacy li{font-size:15px;color:#D7DCE4;padding-left:22px;position:relative}
+.privacy li::before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;border-radius:2px;background:var(--accent)}
+.privacy li b{color:#fff;font-weight:600}
+
+.status{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:40px;margin-top:40px}
+.dot{font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;color:var(--warn)}
+.dot::before{content:"";width:8px;height:8px;border-radius:2px;background:currentColor}
+.addrs{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:6px;font-size:14px}
+.addrs li{display:flex;justify-content:space-between;gap:12px;color:var(--muted)}
+.addrs .tbd{font-family:var(--mono);font-size:13px;color:var(--faint)}
+.status p{color:var(--muted);margin-top:8px;max-width:44ch}
+.docs{list-style:none;margin:0;padding:0;display:grid;align-content:start;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 32px}
+.docs a{display:flex;justify-content:space-between;gap:12px;padding-block:11px;border-top:1px solid var(--line);text-decoration:none;font-size:15px}
+.docs a span{color:var(--faint);font-size:13px}
+.docs a:hover{color:var(--accent)}
+footer{padding-block:28px 56px;border-top:1px solid var(--line-soft);color:var(--faint);font-size:13px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+@media (max-width:780px){
+  .hero,.sec-head,.how-grid,.status{grid-template-columns:minmax(0,1fr);gap:20px}
+  .hero{padding-block:44px 40px}
+  .hero dl{padding-top:8px}
+  .top nav{gap:14px}
+  .docs{grid-template-columns:minmax(0,1fr)}
+  .sec{padding-block:40px}
+  .steps li{grid-template-columns:1.6em minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<a class="skip" href="#how" data-i18n="skip">Skip to how it works</a>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./"><span data-i18n="brand">ArcSeal</span><span data-i18n="brandSub">on Arc</span></a>
+    <nav aria-label="Page">
+      <a href="#how" data-i18n="navHow">How it works</a>
+      <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
+      <a href="#built" data-i18n="navBuilt">Built</a>
+      <a href="https://github.com/r4topunk/arcseal">GitHub</a>
+      <span class="langs" role="group" aria-label="Language">
+        <button type="button" id="lang-en" aria-pressed="true">EN</button>
+        <button type="button" id="lang-pt" aria-pressed="false">PT-BR</button>
+      </span>
+    </nav>
+  </header>
+  <main>
+    <section class="hero" aria-labelledby="h1">
+      <div>
+        <span class="kicker" data-i18n="kicker">Sealed voting for Arc</span>
+        <h1 id="h1">ArcSeal</h1>
+        <p class="tag" data-i18n="tag">Votes nobody can read until the round closes — and anyone can reveal after.</p>
+        <div class="cta">
+          <a class="btn primary" href="#how" data-i18n="ctaHow">See how it works</a>
+          <a class="btn" href="https://github.com/r4topunk/arcseal" data-i18n="ctaGithub">View on GitHub</a>
+        </div>
+      </div>
+      <dl>
+        <div><dt data-i18n="problemT">The problem</dt><dd data-i18n="problemD">Public voting has a bandwagon problem: a running tally shapes votes before they are cast, and every vote is readable onchain the moment it lands.</dd></div>
+        <div><dt data-i18n="solutionT">The solution</dt><dd data-i18n="solutionD">Every vote is timelock-encrypted to a <b>drand</b> round chosen when voting opens. Nobody, including the contract, can read it before that round is public — and after that, anyone can decrypt it and reveal it in one transaction.</dd></div>
+      </dl>
+    </section>
+
+    <section class="sec" id="how" aria-labelledby="h-how">
+      <div class="sec-head">
+        <h2 id="h-how" data-i18n="howH2">How it works</h2>
+        <p data-i18n="howP">Timelock encryption first, as a sealed envelope — then exactly how <code>SealedDAO</code> uses it for a vote.</p>
+      </div>
+
+      <div class="how-grid">
+        <div class="envelope">
+          <div class="icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 6l9 6 9-6M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3 data-i18n="envH3">A sealed envelope that opens itself</h3>
+          <p data-i18n="envP">You write your choice, seal it, and hand it over in public. Anyone can see the envelope exists — nobody can see what's inside. When the clock you agreed on arrives, the lock opens on its own. Nobody has to come back and unlock it.</p>
+          <ol class="env-steps">
+            <li><b data-i18n="env1b">1</b><span data-i18n="env1">Seal — encrypt your choice to a moment in the future.</span></li>
+            <li><b data-i18n="env2b">2</b><span data-i18n="env2">Wait — that moment arrives, on a public clock nobody controls.</span></li>
+            <li><b data-i18n="env3b">3</b><span data-i18n="env3">Open — anyone can decrypt it and check it against your fingerprint.</span></li>
+          </ol>
+        </div>
+        <div class="diagram-wrap">
+<pre class="diagram" data-i18n="diagram">    you                                       drand quicknet (League of Entropy)
+     |                                                    |
+     |-- seal(choice) → hash + ciphertext -->  <b>vote()</b>     round R not public yet
+     |                                           |
+     |                              <b>SealedDAO</b> stores only the hash and round R
+     |                                           |
+     |                              <-- round R published ------------------------|
+     |                                           |
+  anyone -- decrypt every vote, check hash --> <b>revealBatch()</b>  -->  tally, <b>finalize()</b></pre>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th data-i18n="whyArcCol1">Arc property</th><th data-i18n="whyArcCol2">What ArcSeal does with it</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" data-i18n="whyArc1t">Gas paid in USDC, 20 gwei floor</th><td data-i18n="whyArc1d">Sealing a vote costs about 0.0014 USDC, and the small fixed payment for revealing a vote is paid in the same unit it covers.</td></tr>
+            <tr><th scope="row" data-i18n="whyArc2t">Sub-second deterministic finality, no reorgs</th><td data-i18n="whyArc2d">A sealed vote is final on inclusion, so it can be counted right after the close with no confirmation depth to wait for.</td></tr>
+            <tr><th scope="row" data-i18n="whyArc3t">USDC is native and an ERC-20 at 0x3600…0000 (6 decimals)</th><td data-i18n="whyArc3d">The treasury and the gas are the same asset. Members hold only USDC, read only through its 6-decimal view.</td></tr>
+            <tr><th scope="row" data-i18n="whyArc4t">USDC blocklist reverts transfers</th><td data-i18n="whyArc4d">All payouts are pull-based (<code>claim</code>), never pushed, so a blocked recipient can never stall a proposal for anyone else.</td></tr>
+            <tr><th scope="row" data-i18n="whyArc5t">No VRF or timelock service on Arc</th><td data-i18n="whyArc5d">ArcSeal is greenfield: it brings its own timelock-encryption primitive instead of depending on one.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top:44px;font-size:20px" data-i18n="votingH3">How SealedDAO voting works</h3>
+      <ol class="steps">
+        <li><div><b data-i18n="step1b">Propose</b><span data-i18n="step1">A member proposes a USDC transfer or a membership change, and picks a voting window from 10 minutes to 7 days.</span></div></li>
+        <li><div><b data-i18n="step2b">Seal</b><span data-i18n="step2">Each member seals one vote — For, Against or Abstain — before the window closes. Only a hash and an encrypted blob are ever posted.</span></div></li>
+        <li><div><b data-i18n="step3b">Close</b><span data-i18n="step3">Voting closes at a chosen drand round. From that instant, anyone can decrypt every sealed vote.</span></div></li>
+        <li><div><b data-i18n="step4b">Reveal</b><span data-i18n="step4">Anyone decrypts every vote in their own browser and submits them in one transaction. When the proposal met quorum, a small fixed payment per revealed vote covers that transaction's gas.</span></div></li>
+        <li><div><b data-i18n="step5b">Finalize</b><span data-i18n="step5">24 hours after the close, the tally is fixed: quorum is measured over sealed votes, and passing is measured over revealed votes.</span></div></li>
+        <li><div><b data-i18n="step6b">Execute &amp; claim</b><span data-i18n="step6">A passed proposal can be executed within 7 days after the reveal window ends. Every payout is claimed by its own recipient — never pushed to them.</span></div></li>
+      </ol>
+
+      <div class="privacy" id="privacy">
+        <h3 data-i18n="privacyH3">Privacy, stated plainly</h3>
+        <ul>
+          <li data-i18n="privacy1"><b>Secrecy holds during voting.</b> Nobody — not other voters, not the contract, not ArcSeal's authors — can read a sealed vote's choice before its round is public. This relies on drand's League of Entropy threshold staying honest.</li>
+          <li data-i18n="privacy2"><b>From the close round on, anyone can decrypt every sealed vote from the chain;</b> after the reveal, each vote is public per address, permanently, in the event log.</li>
+          <li data-i18n="privacy3"><b>This is not anonymity.</b> If you need who voted, or how, to stay hidden after the fact, ArcSeal is not the right tool.</li>
+          <li data-i18n="privacy4"><b>It does not stop a willing seller.</b> Your vote receipt proves your choice to anyone you show it to, so ArcSeal is not coercion-resistant.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="sec" id="built" aria-labelledby="h-built">
+      <div class="sec-head">
+        <h2 id="h-built" data-i18n="builtH2">What's built</h2>
+        <p data-i18n="builtP">An open-source, MIT-licensed building block. No token, no sale, no yield, no prize, no chance — only a voting and treasury primitive.</p>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th data-i18n="partCol">Part</th><th data-i18n="whatCol">What it does</th><th data-i18n="testsCol">Tests</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Sealed.sol</th><td data-i18n="part1">Abstract primitive: hash commitments keyed to a drand round, reveal by hash, no owner, never deployed alone</td><td class="num" data-i18n="part1n">part of the suite below</td></tr>
+            <tr><th scope="row">SealedDAO.sol</th><td data-i18n="part2">Member-list DAO: sealed voting, USDC treasury, pull-based payouts</td><td class="num" data-i18n="part2n">173 tests (3 fork tests skipped)</td></tr>
+            <tr><th scope="row">@arcseal/tlock</th><td data-i18n="part3">Vendored tlock-js, quicknet only, Node and browser</td><td class="num" data-i18n="part3n">72 tests</td></tr>
+            <tr><th scope="row">@arcseal/sdk</th><td data-i18n="part4">seal, unseal, reveal-all, viem actions for every contract call</td><td class="num" data-i18n="part4n">129 tests</td></tr>
+            <tr><th scope="row">apps/web</th><td data-i18n="part5">Static site: proposals, voting, reveal, treasury</td><td class="num" data-i18n="part5n">77 tests</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="status">
+        <div>
+          <span class="dot" data-i18n="statusLine">Status: live on Arc mainnet; proofs close on 2026-09-19</span>
+          <p data-i18n="statusP"><code>SealedDAO</code> is deployed and Sourcify-verified on Arc mainnet. All six sealed votes of the three proofs are revealed; finalize and execute follow when the 24 h reveal window ends (2026-09-19 14:08 UTC). The proof DAO's members are wallets the author controls.</p>
+          <ul class="addrs">
+            <li><span data-i18n="addr1">SealedDAO</span><span class="mono tbd" data-i18n="tbd1"><a href="https://explorer.arc.io/address/0x789f7689efb75a1696c5a25d5ae97ac2cf6a2c44">0x789f…2c44</a></span></li>
+            <li><span data-i18n="addr2">Proof 1: USDC transfer, revealed and executed</span><span class="mono tbd" data-i18n="tbd2">3 of 3 revealed (<a href="https://explorer.arc.io/tx/0x66e70f35000463ec17d28acfa7d035b2ca3ab81af332f44a50026dc41b828320">reveal tx</a>); executes 2026-09-19</span></li>
+            <li><span data-i18n="addr3">Proof 2: add a member</span><span class="mono tbd" data-i18n="tbd3">2 of 2 revealed (<a href="https://explorer.arc.io/tx/0x781c14ee4a48f51c99fd3e161f9dafe2bc569b38812959b077fe486ccfb12319">reveal tx</a>); executes 2026-09-19</span></li>
+            <li><span data-i18n="addr4">Proof 3: quorum not met, a reveal skipped</span><span class="mono tbd" data-i18n="tbd4">1 revealed, 1 skipped (<a href="https://explorer.arc.io/tx/0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2">reveal tx</a>)</span></li>
+          </ul>
+        </div>
+        <ul class="docs">
+          <li><a href="./app/proposals/"><span data-i18n="docApp">App</span><span data-i18n="docAppS">app/proposals/</span></a></li>
+          <li><a href="./docs/integration/"><span data-i18n="docInt">Integration guide</span><span data-i18n="docIntS">docs/integration/</span></a></li>
+          <li><a href="./docs/faq/"><span data-i18n="docFaq">FAQ</span><span data-i18n="docFaqS">docs/faq/</span></a></li>
+          <li><a href="./docs/spec/"><span data-i18n="docSpec">Spec summary</span><span data-i18n="docSpecS">docs/spec/</span></a></li>
+          <li><a href="https://github.com/r4topunk/arcseal/blob/main/README.md"><span data-i18n="docReadme">README</span><span>README.md</span></a></li>
+          <li><a href="https://github.com/r4topunk/arcseal/blob/main/docs/SPEC.md"><span data-i18n="docFullSpec">Full spec</span><span>docs/SPEC.md</span></a></li>
+          <li><a href="https://github.com/r4topunk/arcseal/blob/main/docs/THREATS.md"><span data-i18n="docThreats">Threat model</span><span>docs/THREATS.md</span></a></li>
+          <li><a href="https://github.com/r4topunk/arcseal/blob/main/docs/GAS.md"><span data-i18n="docGas">Gas costs</span><span>docs/GAS.md</span></a></li>
+          <li><a href="https://github.com/r4topunk/arcseal/blob/main/LICENSE"><span data-i18n="docLicense">License (MIT)</span><span>LICENSE</span></a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <span data-i18n="footL">ArcSeal · MIT license · experimental, not externally audited</span>
+    <span data-i18n="footR">No token, no sale, no yield, no prize, no chance — a voting and treasury primitive only.</span>
+  </footer>
+</div>
+<script>
+(() => {
+  const STORAGE_KEY = 'arcseal:lang';
+  const I18N = {
+    en: {
+      skip:'Skip to how it works', brand:'ArcSeal', brandSub:'on Arc',
+      navHow:'How it works', navPrivacy:'Privacy', navBuilt:'Built',
+      kicker:'Sealed voting for Arc', tag:'Votes nobody can read until the round closes — and anyone can reveal after.',
+      ctaHow:'See how it works', ctaGithub:'View on GitHub',
+      problemT:'The problem', problemD:'Public voting has a bandwagon problem: a running tally shapes votes before they are cast, and every vote is readable onchain the moment it lands.',
+      solutionT:'The solution', solutionD:'Every vote is timelock-encrypted to a <b>drand</b> round chosen when voting opens. Nobody, including the contract, can read it before that round is public — and after that, anyone can decrypt it and reveal it in one transaction.',
+      howH2:'How it works', howP:'Timelock encryption first, as a sealed envelope — then exactly how <code>SealedDAO</code> uses it for a vote.',
+      envH3:'A sealed envelope that opens itself',
+      envP:'You write your choice, seal it, and hand it over in public. Anyone can see the envelope exists — nobody can see what\'s inside. When the clock you agreed on arrives, the lock opens on its own. Nobody has to come back and unlock it.',
+      env1b:'1', env1:'Seal — encrypt your choice to a moment in the future.',
+      env2b:'2', env2:'Wait — that moment arrives, on a public clock nobody controls.',
+      env3b:'3', env3:'Open — anyone can decrypt it and check it against your fingerprint.',
+      diagram:'    you                                       drand quicknet (League of Entropy)\n     |                                                    |\n     |-- seal(choice) → hash + ciphertext -->  <b>vote()</b>     round R not public yet\n     |                                           |\n     |                              <b>SealedDAO</b> stores only the hash and round R\n     |                                           |\n     |                              <-- round R published ------------------------|\n     |                                           |\n  anyone -- decrypt every vote, check hash --> <b>revealBatch()</b>  -->  tally, <b>finalize()</b>',
+      whyArcCol1:'Arc property', whyArcCol2:'What ArcSeal does with it',
+      whyArc1t:'Gas paid in USDC, 20 gwei floor', whyArc1d:'Sealing a vote costs about 0.0014 USDC, and the small fixed payment for revealing a vote is paid in the same unit it covers.',
+      whyArc2t:'Sub-second deterministic finality, no reorgs', whyArc2d:'A sealed vote is final on inclusion, so it can be counted right after the close with no confirmation depth to wait for.',
+      whyArc3t:'USDC is native and an ERC-20 at 0x3600…0000 (6 decimals)', whyArc3d:'The treasury and the gas are the same asset. Members hold only USDC, read only through its 6-decimal view.',
+      whyArc4t:'USDC blocklist reverts transfers', whyArc4d:'All payouts are pull-based (<code>claim</code>), never pushed, so a blocked recipient can never stall a proposal for anyone else.',
+      whyArc5t:'No VRF or timelock service on Arc', whyArc5d:'ArcSeal is greenfield: it brings its own timelock-encryption primitive instead of depending on one.',
+      votingH3:'How SealedDAO voting works',
+      step1b:'Propose', step1:'A member proposes a USDC transfer or a membership change, and picks a voting window from 10 minutes to 7 days.',
+      step2b:'Seal', step2:'Each member seals one vote — For, Against or Abstain — before the window closes. Only a hash and an encrypted blob are ever posted.',
+      step3b:'Close', step3:'Voting closes at a chosen drand round. From that instant, anyone can decrypt every sealed vote.',
+      step4b:'Reveal', step4:'Anyone decrypts every vote in their own browser and submits them in one transaction. When the proposal met quorum, a small fixed payment per revealed vote covers that transaction\'s gas.',
+      step5b:'Finalize', step5:'24 hours after the close, the tally is fixed: quorum is measured over sealed votes, and passing is measured over revealed votes.',
+      step6b:'Execute &amp; claim', step6:'A passed proposal can be executed within 7 days after the reveal window ends. Every payout is claimed by its own recipient — never pushed to them.',
+      privacyH3:'Privacy, stated plainly',
+      privacy1:'<b>Secrecy holds during voting.</b> Nobody — not other voters, not the contract, not ArcSeal\'s authors — can read a sealed vote\'s choice before its round is public. This relies on drand\'s League of Entropy threshold staying honest.',
+      privacy2:'<b>From the close round on, anyone can decrypt every sealed vote from the chain;</b> after the reveal, each vote is public per address, permanently, in the event log.',
+      privacy3:'<b>This is not anonymity.</b> If you need who voted, or how, to stay hidden after the fact, ArcSeal is not the right tool.',
+      privacy4:'<b>It does not stop a willing seller.</b> Your vote receipt proves your choice to anyone you show it to, so ArcSeal is not coercion-resistant.',
+      builtH2:'What\'s built', builtP:'An open-source, MIT-licensed building block. No token, no sale, no yield, no prize, no chance — only a voting and treasury primitive.',
+      partCol:'Part', whatCol:'What it does', testsCol:'Tests',
+      part1:'Abstract primitive: hash commitments keyed to a drand round, reveal by hash, no owner, never deployed alone', part1n:'part of the suite below',
+      part2:'Member-list DAO: sealed voting, USDC treasury, pull-based payouts', part2n:'173 tests (3 fork tests skipped)',
+      part3:'Vendored tlock-js, quicknet only, Node and browser', part3n:'72 tests',
+      part4:'seal, unseal, reveal-all, viem actions for every contract call', part4n:'129 tests',
+      part5:'Static site: proposals, voting, reveal, treasury', part5n:'77 tests',
+      statusLine:'Status: live on Arc mainnet; proofs close on 2026-09-19',
+      statusP:'<code>SealedDAO</code> is deployed and Sourcify-verified on Arc mainnet. All six sealed votes of the three proofs are revealed; finalize and execute follow when the 24 h reveal window ends (2026-09-19 14:08 UTC). The proof DAO\'s members are wallets the author controls.',
+      addr1:'SealedDAO', addr2:'Proof 1: USDC transfer, revealed and executed', addr3:'Proof 2: add a member', addr4:'Proof 3: quorum not met, a reveal skipped',
+      tbd1:'<a href="https://explorer.arc.io/address/0x789f7689efb75a1696c5a25d5ae97ac2cf6a2c44">0x789f…2c44</a>', tbd2:'3 of 3 revealed (<a href="https://explorer.arc.io/tx/0x66e70f35000463ec17d28acfa7d035b2ca3ab81af332f44a50026dc41b828320">reveal tx</a>); executes 2026-09-19', tbd3:'2 of 2 revealed (<a href="https://explorer.arc.io/tx/0x781c14ee4a48f51c99fd3e161f9dafe2bc569b38812959b077fe486ccfb12319">reveal tx</a>); executes 2026-09-19', tbd4:'1 revealed, 1 skipped (<a href="https://explorer.arc.io/tx/0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2">reveal tx</a>)',
+      docApp:'App', docAppS:'app/proposals/', docInt:'Integration guide', docIntS:'docs/integration/', docFaq:'FAQ', docFaqS:'docs/faq/', docSpec:'Spec summary', docSpecS:'docs/spec/',
+      docReadme:'README', docFullSpec:'Full spec', docThreats:'Threat model', docGas:'Gas costs', docLicense:'License (MIT)',
+      footL:'ArcSeal · MIT license · experimental, not externally audited',
+      footR:'No token, no sale, no yield, no prize, no chance — a voting and treasury primitive only.',
+      title:'ArcSeal: sealed voting on Arc',
+      desc:'Timelock-encrypted sealed voting on Arc. Votes stay sealed until the round closes; after that, anyone can reveal them.'
+    },
+    pt: {
+      skip:'Pular para como funciona', brand:'ArcSeal', brandSub:'na Arc',
+      navHow:'Como funciona', navPrivacy:'Privacidade', navBuilt:'O que foi construído',
+      kicker:'Votação selada para a Arc', tag:'Votos que ninguém consegue ler até a rodada fechar — e que qualquer pessoa pode revelar depois.',
+      ctaHow:'Ver como funciona', ctaGithub:'Ver no GitHub',
+      problemT:'O problema', problemD:'Votação pública tem um problema de efeito manada: uma contagem em andamento molda os votos antes de eles serem dados, e todo voto fica legível onchain no momento em que entra.',
+      solutionT:'A solução', solutionD:'Todo voto é cifrado com trava de tempo para uma rodada do <b>drand</b> escolhida quando a votação abre. Ninguém, nem o contrato, consegue lê-lo antes dessa rodada se tornar pública — e depois disso, qualquer pessoa pode descriptografá-lo e revelá-lo em uma única transação.',
+      howH2:'Como funciona', howP:'Primeiro a criptografia com trava de tempo, como um envelope selado — depois, exatamente como o <code>SealedDAO</code> a usa para um voto.',
+      envH3:'Um envelope selado que se abre sozinho',
+      envP:'Você escreve sua escolha, sela e entrega em público. Qualquer pessoa vê que o envelope existe — ninguém vê o que tem dentro. Quando chega o momento combinado, a trava se abre sozinha. Ninguém precisa voltar para destravá-la.',
+      env1b:'1', env1:'Selar — cifrar sua escolha para um momento no futuro.',
+      env2b:'2', env2:'Esperar — esse momento chega, num relógio público que ninguém controla.',
+      env3b:'3', env3:'Abrir — qualquer pessoa pode descriptografar e conferir contra a sua impressão digital.',
+      diagram:'    você                                      drand quicknet (League of Entropy)\n     |                                                    |\n     |-- seal(escolha) → hash + ciphertext -->  <b>vote()</b>   rodada R ainda não é pública\n     |                                           |\n     |                              <b>SealedDAO</b> guarda só o hash e a rodada R\n     |                                           |\n     |                              <-- rodada R publicada -----------------------|\n     |                                           |\n  qualquer um -- descriptografa e confere hash --> <b>revealBatch()</b>  -->  apuração, <b>finalize()</b>',
+      whyArcCol1:'Propriedade da Arc', whyArcCol2:'O que o ArcSeal faz com ela',
+      whyArc1t:'Gás pago em USDC, piso de 20 gwei', whyArc1d:'Selar um voto custa cerca de 0,0014 USDC, e o pequeno pagamento fixo por revelar um voto é pago na mesma unidade que ele cobre.',
+      whyArc2t:'Finalidade determinística em menos de um segundo, sem reorgs', whyArc2d:'Um voto selado é final assim que incluído, então pode ser contado logo após o fechamento, sem profundidade de confirmação para esperar.',
+      whyArc3t:'USDC é nativo e um ERC-20 em 0x3600…0000 (6 casas decimais)', whyArc3d:'O tesouro e o gás são o mesmo ativo. Membros só têm USDC, lido apenas pela sua visão de 6 casas decimais.',
+      whyArc4t:'A lista de bloqueio da USDC reverte transferências', whyArc4d:'Todo pagamento é sacado pelo próprio destinatário (<code>claim</code>), nunca enviado automaticamente, então um destinatário bloqueado nunca consegue travar uma proposta para mais ninguém.',
+      whyArc5t:'Sem VRF ou serviço de timelock na Arc', whyArc5d:'O ArcSeal parte do zero: ele traz o próprio primitivo de criptografia com trava de tempo em vez de depender de um serviço externo.',
+      votingH3:'Como funciona a votação do SealedDAO',
+      step1b:'Propor', step1:'Um membro propõe uma transferência em USDC ou uma mudança na lista de membros, e escolhe uma janela de votação entre 10 minutos e 7 dias.',
+      step2b:'Selar', step2:'Cada membro sela um voto — A favor, Contra ou Abstenção — antes da janela fechar. Só um hash e um blob cifrado são publicados.',
+      step3b:'Fechar', step3:'A votação fecha numa rodada do drand escolhida. A partir desse instante, qualquer pessoa pode descriptografar todos os votos selados.',
+      step4b:'Revelar', step4:'Qualquer pessoa descriptografa todos os votos no próprio navegador e os envia em uma única transação. Quando a proposta atingiu o quórum, um pequeno pagamento fixo por voto revelado cobre o gás dessa transação.',
+      step5b:'Finalizar', step5:'24 horas depois do fechamento, a apuração é fixada: o quórum é medido sobre os votos selados, e a aprovação é medida sobre os votos revelados.',
+      step6b:'Executar e resgatar', step6:'Uma proposta aprovada pode ser executada em até 7 dias após o fim da janela de revelação. Todo pagamento é resgatado pelo próprio destinatário, nunca enviado automaticamente.',
+      privacyH3:'Privacidade, dita sem rodeios',
+      privacy1:'<b>O sigilo vale durante a votação.</b> Ninguém — nem outros eleitores, nem o contrato, nem os autores do ArcSeal — consegue ler a escolha de um voto selado antes de sua rodada se tornar pública. Isso depende de o limiar do League of Entropy do drand continuar honesto.',
+      privacy2:'<b>A partir da rodada de fechamento, qualquer pessoa pode decifrar todos os votos selados a partir da chain;</b> depois da revelação, cada voto fica público por endereço, para sempre, no log de eventos.',
+      privacy3:'<b>Isso não é anonimato.</b> Se você precisa que quem votou, ou como, fique oculto depois da votação, o ArcSeal não é a ferramenta certa.',
+      privacy4:'<b>Não impede quem quer vender o voto.</b> O comprovante do seu voto prova a sua escolha para quem você mostrar, então o ArcSeal não resiste a coerção.',
+      builtH2:'O que foi construído', builtP:'Um bloco de construção open-source, licenciado em MIT. Sem token, sem venda, sem rendimento, sem prêmio, sem sorteio — só um primitivo de votação e tesouraria.',
+      partCol:'Parte', whatCol:'O que faz', testsCol:'Testes',
+      part1:'Primitivo abstrato: compromissos hash vinculados a uma rodada do drand, revelação por hash, sem dono, nunca implantado sozinho', part1n:'parte da suíte abaixo',
+      part2:'DAO com lista de membros: votação selada, tesouro em USDC, pagamentos pull-based', part2n:'173 testes (3 de fork pulados)',
+      part3:'tlock-js vendorizado, só quicknet, Node e navegador', part3n:'72 testes',
+      part4:'seal, unseal, reveal-all, ações viem para cada chamada do contrato', part4n:'129 testes',
+      part5:'Site estático: propostas, votação, revelação, tesouraria', part5n:'77 testes',
+      statusLine:'Status: no ar na mainnet da Arc; provas fecham em 19/09/2026',
+      statusP:'O <code>SealedDAO</code> está implantado e verificado no Sourcify na mainnet da Arc. Os seis votos selados das três provas já foram revelados; a finalização e a execução vêm quando a janela de revelação de 24 h termina (19/09/2026, 11:08 no horário de Brasília). Os membros da DAO de prova são carteiras controladas pelo autor.',
+      addr1:'SealedDAO', addr2:'Prova 1: transferência em USDC, revelada e executada', addr3:'Prova 2: adicionar um membro', addr4:'Prova 3: quórum não atingido, uma revelação pulada',
+      tbd1:'<a href="https://explorer.arc.io/address/0x789f7689efb75a1696c5a25d5ae97ac2cf6a2c44">0x789f…2c44</a>', tbd2:'3 de 3 revelados (<a href="https://explorer.arc.io/tx/0x66e70f35000463ec17d28acfa7d035b2ca3ab81af332f44a50026dc41b828320">tx da revelação</a>); executa em 19/09', tbd3:'2 de 2 revelados (<a href="https://explorer.arc.io/tx/0x781c14ee4a48f51c99fd3e161f9dafe2bc569b38812959b077fe486ccfb12319">tx da revelação</a>); executa em 19/09', tbd4:'1 revelado, 1 pulado (<a href="https://explorer.arc.io/tx/0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2">tx da revelação</a>)',
+      docApp:'App', docAppS:'app/proposals/', docInt:'Guia de integração', docIntS:'docs/integration/', docFaq:'Perguntas frequentes', docFaqS:'docs/faq/', docSpec:'Resumo técnico', docSpecS:'docs/spec/',
+      docReadme:'README', docFullSpec:'Spec completa', docThreats:'Modelo de ameaças', docGas:'Custos de gás', docLicense:'Licença (MIT)',
+      footL:'ArcSeal · licença MIT · experimental, sem auditoria externa',
+      footR:'Sem token, sem venda, sem rendimento, sem prêmio, sem sorteio — só um primitivo de votação e tesouraria.',
+      title:'ArcSeal: votação selada na Arc',
+      desc:'Votação selada com criptografia de trava de tempo na Arc. Os votos ficam selados até a rodada fechar; depois disso, qualquer pessoa pode revelá-los.'
+    }
+  };
+
+  const buttons = { en: document.getElementById('lang-en'), pt: document.getElementById('lang-pt') };
+  const htmlRoot = document.getElementById('html-root');
+  const docTitle = document.getElementById('doc-title');
+  const docDesc = document.getElementById('doc-desc');
+
+  function apply(lang) {
+    const dict = I18N[lang] || I18N.en;
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      const key = el.getAttribute('data-i18n');
+      if (key in dict) el.innerHTML = dict[key];
+    });
+    htmlRoot.setAttribute('lang', lang === 'pt' ? 'pt-BR' : 'en');
+    docTitle.textContent = dict.title;
+    docDesc.setAttribute('content', dict.desc);
+    buttons.en.setAttribute('aria-pressed', String(lang === 'en'));
+    buttons.pt.setAttribute('aria-pressed', String(lang === 'pt'));
+  }
+
+  function readStoredLang() {
+    try {
+      const v = localStorage.getItem(STORAGE_KEY);
+      return v === 'pt' || v === 'en' ? v : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function storeLang(lang) {
+    try {
+      localStorage.setItem(STORAGE_KEY, lang);
+    } catch {
+      /* private mode or blocked storage: language still applies for this view */
+    }
+  }
+
+  function setLang(lang) {
+    apply(lang);
+    storeLang(lang);
+  }
+
+  buttons.en.addEventListener('click', () => setLang('en'));
+  buttons.pt.addEventListener('click', () => setLang('pt'));
+
+  const initial = readStoredLang() || 'en';
+  apply(initial);
+})();
+</script>
+</body>
+</html>

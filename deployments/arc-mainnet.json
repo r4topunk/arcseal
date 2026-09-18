@@ -1,0 +1,63 @@
+{
+  "network": "arc-mainnet",
+  "chainId": 5042,
+  "rpcUrl": "https://rpc.mainnet.arc.io",
+  "explorer": "https://explorer.arc.io",
+  "token": {
+    "symbol": "USDC",
+    "address": "0x3600000000000000000000000000000000000000",
+    "decimals": 6
+  },
+  "contracts": {
+    "SealedDAO": {
+      "address": "0x789f7689efb75a1696c5a25d5ae97ac2cf6a2c44",
+      "deployBlock": 21508506,
+      "deployTx": "0xf583c2a2be72d010465b4ea7cd70cd48ffeab8ee26dc2878a8e0f0838aae2287",
+      "verified": true,
+      "commit": null,
+      "deployer": "0x39a7b6fa1597bb6657fe84e64e3b836c37d6f75d",
+      "salt": "keccak256(\"arcseal.v1\")",
+      "saltHash": "0xab625800dd8b6a1ec1cafaa199bb72f27c5482aec13bf092272907043180863e",
+      "constructorArgs": {
+        "usdc": "0x3600000000000000000000000000000000000000",
+        "initialMembers": [
+          "0x39a7B6fa1597BB6657Fe84e64E3B836c37d6F75d",
+          "0x47bD13c0e697Cb9324c19FbC1857D226781234E0",
+          "0xE5A415927B5cCec27BC54a3F7b0140c9dc13bf31"
+        ],
+        "quorumBps": 5000,
+        "revealBounty": 10000
+      },
+      "sourcify": {
+        "runtimeMatch": "exact_match",
+        "creationMatch": "exact_match"
+      }
+    }
+  },
+  "proofTxs": {
+    "fundTreasury": "0xb7470d0b1c5fc7058e08c4ddac6b538093159bfd8b5fbe9fcb9eed2a1af4cc70",
+    "transferPropose": "0x353ef369ff80270563033490020657e81a2eb1154fc369784ae4470e89f13467",
+    "transferVotes": [
+      "0xf0f54f3ba7f6cefa321fae6004aec8ac70279569cb57495eebe900f08929a914",
+      "0x695a8ba13d59a20b24b9f42b650c63b3726b18ba358d21c3870a5150c1ccad8e",
+      "0x9aa7f643784e588175d66c8edcce8cc5d4e7b4ac1f32e298c9b4add62efa5627"
+    ],
+    "transferRevealBatch": "0x66e70f35000463ec17d28acfa7d035b2ca3ab81af332f44a50026dc41b828320",
+    "transferFinalize": null,
+    "transferExecute": null,
+    "transferClaim": null,
+    "transferBountyClaim": "0x4c534dc5d42fa2035cb1ed9018a2751ef0838929471fa94793f3ec5aacff1552",
+    "addMemberPropose": "0x96991c2d06c38b299448c96a8e4ff8a412f037d44a7ea36adcbf52dde182e45a",
+    "addMemberVotes": [
+      "0x01886649dd11dc6a4a30d4d2c049d957ecee22ef0db476c4c6577a790a79f779",
+      "0xc32dc596c9172ec5959e94b2457bd65cd2fc99fda718142290fb678312a8aa43"
+    ],
+    "addMemberRevealBatch": "0x781c14ee4a48f51c99fd3e161f9dafe2bc569b38812959b077fe486ccfb12319",
+    "addMemberFinalize": null,
+    "addMemberExecute": null,
+    "quorumFailPropose": "0x771c4edf0aeec984689bedf1cfb51801f69ffa0c8d16c4591caa0553ec4e8154",
+    "quorumFailVote": "0x516f2e824407ebf62e13034acd59150bd773dd39376da04652dbca93b4226391",
+    "quorumFailFinalize": null,
+    "revealBatchWithSkippedItem": "0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2"
+  }
+}

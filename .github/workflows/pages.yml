@@ -1,0 +1,54 @@
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths: [site/**, apps/web/**, packages/**, .github/workflows/pages.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Builds @arcseal/tlock and @arcseal/sdk first, then the static export of the app (/arcseal/app/*, /arcseal/docs/*).
+      - name: Build the web app
+        run: pnpm --filter "@arcseal/web..." build
+        env:
+          NEXT_PUBLIC_BASE_PATH: /arcseal
+          NEXT_PUBLIC_SITE_URL: https://r4topunk.github.io/arcseal
+          NEXT_PUBLIC_REPO_URL: https://github.com/r4topunk/arcseal
+          # Deployment-specific values come from repository variables (Settings > Variables). Unset RPC and explorer
+          # fall back to the defaults of the chosen chain in apps/web/src/lib/config.ts (mainnet or testnet).
+          NEXT_PUBLIC_CHAIN_ID: ${{ vars.NEXT_PUBLIC_CHAIN_ID || '5042' }}
+          NEXT_PUBLIC_RPC_URL: ${{ vars.NEXT_PUBLIC_RPC_URL }}
+          NEXT_PUBLIC_EXPLORER_URL: ${{ vars.NEXT_PUBLIC_EXPLORER_URL }}
+          NEXT_PUBLIC_DAO_ADDRESS: ${{ vars.NEXT_PUBLIC_DAO_ADDRESS }}
+          NEXT_PUBLIC_DAO_DEPLOY_BLOCK: ${{ vars.NEXT_PUBLIC_DAO_DEPLOY_BLOCK }}
+      # site/ goes on top of the export, so site/index.html is the project page at https://r4topunk.github.io/arcseal/
+      - name: Assemble the Pages artifact
+        run: |
+          rm -rf _site
+          mkdir -p _site
+          cp -R apps/web/out/. _site/
+          cp -R site/. _site/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - uses: actions/deploy-pages@v4
