@@ -90,7 +90,7 @@ What it uses Arc for:
 - The 10,000-block `eth_getLogs` cap is handled by windowed log scans in the SDK and the app.
 - Arc has no VRF or timelock service today; ArcSeal brings its own.
 
-Live on Arc mainnet since 2026-09-18 and Sourcify-verified (exact match, runtime and creation). The three demo proofs are proposed, sealed and revealed onchain, the first two through the site's "Reveal votes" button in the browser; finalize and execute follow when the fixed 24 h reveal window ends on 2026-09-19 14:08 UTC.
+Live on Arc mainnet since 2026-09-18 and Sourcify-verified (exact match, runtime and creation). All three demo proofs ran end to end: sealed, revealed (the first two through the site's "Reveal votes" button in the browser), finalized, executed and claimed on 2026-09-19, right after the fixed 24 h reveal window ended. 0 votes lost.
 
 ## Mainnet deployment
 
@@ -121,12 +121,12 @@ All transactions below have status success. Gas and cost come from the mainnet r
 | 13 | Proof 3 · propose (negative proof, must fail quorum) | [0x771c…8154](https://explorer.arc.io/tx/0x771c4edf0aeec984689bedf1cfb51801f69ffa0c8d16c4591caa0553ec4e8154) | 249,212 | 0.0050 |
 | 14 | Proof 3 · the only sealed vote (1 of 3 members, below the 50% quorum) | [0x516f…6391](https://explorer.arc.io/tx/0x516f2e824407ebf62e13034acd59150bd773dd39376da04652dbca93b4226391) | 68,303 | 0.0014 |
 | 15 | Proof 3 · `revealBatch` with one garbage item: 1 `VoteRevealed` + 1 `RevealSkipped`, no reveal payment below quorum | [0x49b4…afd2](https://explorer.arc.io/tx/0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2) | 51,880 | 0.0010 |
-| 16 | Proof 1 · `finalize` (expected Passed, 2 For / 1 Against) | `TBD` | | |
-| 17 | Proof 2 · `finalize` (expected Passed) | `TBD` | | |
-| 18 | Proof 3 · `finalize` (expected Failed: quorum not met) | `TBD` | | |
-| 19 | Proof 1 · `execute` (credits 1 USDC to WALLET_C, pull-based) | `TBD` | | |
-| 20 | Proof 2 · `execute` (`memberCount` 3 → 4) | `TBD` | | |
-| 21 | Proof 1 · `claim()` by WALLET_C (1 USDC) | `TBD` | | |
+| 16 | Proof 1 · `finalize`: Passed, 2 For / 1 Against | [0x8dca…660f](https://explorer.arc.io/tx/0x8dca055ebe4b7f35307349d7d94c402756ff1553b9d67fe16c8993ebec27660f) | 32,827 | 0.00066 |
+| 17 | Proof 2 · `finalize`: Passed | [0x0116…ede4](https://explorer.arc.io/tx/0x0116d663ca7cebb641fb2cb7be047859a637bc4c1c4f413997023370acf7ede4) | 49,927 | 0.0010 |
+| 18 | Proof 3 · `finalize`: Failed, quorum not met | [0xc473…4602](https://explorer.arc.io/tx/0xc473d686c51498c8c35efd97ccb8ee4ffa788eb740a4859ec5076b7c9b714602) | 49,904 | 0.0010 |
+| 19 | Proof 1 · `execute`: 1 USDC credited to WALLET_C (pull-based) | [0xdfa9…2d46](https://explorer.arc.io/tx/0xdfa967add56dcb1be2673a90243019bcae1536251f2a164973cde67a300a2d46) | 93,187 | 0.0019 |
+| 20 | Proof 2 · `execute`: `memberCount` 3 → 4 | [0x7c97…08ea](https://explorer.arc.io/tx/0x7c97e2cd6f904392c6a78a5813214e5f30dd0d823d53424c1d18b51dc48b08ea) | 66,939 | 0.0013 |
+| 21 | Proof 1 · `claim()` by WALLET_C: 1 USDC | [0x8abc…6527](https://explorer.arc.io/tx/0x8abcfd3775e7459e7135b82427f749250d8e7b1d524dd4cd2229f999188a6527) | 52,086 | 0.0010 |
 
 ## Tech stack
 
@@ -217,5 +217,6 @@ finalizes all three proofs, executes 1 and 2, and claims WALLET_C's 1 USDC; it a
 - [x] Public repo pushed, project page and app live
 - [x] Proofs proposed, sealed and revealed on mainnet (0 votes lost)
 - [x] BUIDL submitted: https://dorahacks.io/buidl/48963
-- [ ] Proofs finalized, executed, claimed (after 2026-09-19 14:08 UTC)
-- [ ] Details block, README, `docs/GAS.md` and site tracker updated with rows 16–21; BUIDL edited
+- [x] Proofs finalized, executed, claimed (2026-09-19 14:11 UTC)
+- [x] Details block, README, `docs/GAS.md` and site tracker updated with rows 16–21
+- [ ] BUIDL 48963 edited with rows 16–21 and the new status paragraph (owner's OK)

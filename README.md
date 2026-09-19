@@ -11,9 +11,8 @@ sealed until the voting round closes: no running tally, no bandwagon, no vote re
 and no vote lost just because a member never comes back to reveal it. (A voter can still prove their own vote by
 sharing their receipt; see [Not provided](#not-provided).)
 
-> **Status:** live on Arc mainnet since 2026-09-18 (Sourcify exact match). All six sealed votes of the three proofs
-> are revealed; finalize, execute and the last claim follow once the 24 h reveal window ends on 2026-09-19 14:08 UTC
-> (see [Mainnet proof](#mainnet-proof)). Every package builds and its tests pass (`pnpm check`). Testnet was skipped:
+> **Status:** live on Arc mainnet since 2026-09-18 (Sourcify exact match). All three proofs ran end to end: every
+> sealed vote revealed, proposals finalized, executed and claimed on 2026-09-19 (see [Mainnet proof](#mainnet-proof)). Every package builds and its tests pass (`pnpm check`). Testnet was skipped:
 > the offline anvil dry run of the same flow (`pnpm e2e:dry-run`) stood in for it.
 > **Unaudited and experimental**: keep amounts small.
 
@@ -155,7 +154,7 @@ floor, paid in USDC. The mainnet proof run replaces the last column.
 | `claim` | 49,338 | 0.0010 | within (≤ 55k) |
 
 The two misses come from unavoidable zero-to-non-zero storage writes that the pull-payment design (D6, D13)
-requires; the full breakdown, every call and the Arc mainnet column (from the proof transactions; finalize and execute land on 2026-09-19) are
+requires; the full breakdown, every call and the Arc mainnet column (from the proof transactions) are
 in [docs/GAS.md](docs/GAS.md).
 
 ## Metrics
@@ -167,7 +166,7 @@ receipts.
 |---|---|---|
 | Cost per sealed vote | ≤ 0.002 USDC | 0.00137 USDC on mainnet (68,303 gas, six votes) |
 | Cost per revealed vote | ≤ 0.003 USDC | 0.00101 per vote in the 3-vote mainnet batch (151,214 gas); locally 0.00197 alone and 0.00026 at 256 items |
-| Close-to-execute latency, mainnet demo | < 5 minutes | **Not achievable as stated.** The reveal window is a fixed 24 h from the close round regardless of voting duration (D5), so the earliest any proposal can be finalized is 24 h after it closes. What is achievable in minutes is close-to-**reveal**: the close round's drand beacon is published at the close itself, and one `revealBatch` can follow right away. See [docs/SPEC.md §6.4](docs/SPEC.md#64-reveal-window-and-expiry-timeline-d5) |
+| Close-to-execute latency, mainnet demo | < 5 minutes | **Not achievable as stated.** The reveal window is a fixed 24 h from the close round regardless of voting duration (D5), so the earliest any proposal can be finalized is 24 h after it closes. Measured on mainnet: close 2026-09-18 14:08:27 UTC, execute 2026-09-19 14:11:50 UTC (24 h 3 min; the close script was scheduled 3 min after the window). What is achievable in minutes is close-to-**reveal**: the close round's drand beacon is published at the close itself, and one `revealBatch` can follow right away. See [docs/SPEC.md §6.4](docs/SPEC.md#64-reveal-window-and-expiry-timeline-d5) |
 | Votes lost in the mainnet proofs | 0 | 0: 6 of 6 sealed votes revealed (3 + 2 + 1), 1 garbage item skipped |
 | Regression | gas snapshot + test counts tracked in CI | `contracts/.gas-snapshot` checked at 5% tolerance; counts below |
 
@@ -198,7 +197,8 @@ Full analysis: [docs/SPEC.md](docs/SPEC.md) and [docs/THREATS.md](docs/THREATS.m
 
 Recorded in [`deployments/arc-mainnet.json`](deployments/arc-mainnet.json) (PRD §10.2). Proofs 1 and 2 were revealed
 with the app's "Reveal votes" button (decrypted in the browser, one `revealBatch` each, from WALLET_B); proof 3 with
-`reveal-cli --garbage-item`. Rows marked `TBD` land after the reveal window ends on 2026-09-19 14:08 UTC.
+`reveal-cli --garbage-item`. Finalize, execute and claim ran on 2026-09-19 at 14:11 UTC, right after the 24 h
+reveal window ended. Every transaction has status `success`.
 
 All members of the proof DAO are wallets the author controls (PRD D16). The proofs show the mechanism working end
 to end, not independent voters.
@@ -206,9 +206,9 @@ to end, not independent voters.
 | Proof | Tx |
 |---|---|
 | Deploy `SealedDAO` (verified on Sourcify) / fund treasury (2 USDC) | [`0xf583c2a2…`](https://explorer.arc.io/tx/0xf583c2a2be72d010465b4ea7cd70cd48ffeab8ee26dc2878a8e0f0838aae2287) / [`0xb7470d0b…`](https://explorer.arc.io/tx/0xb7470d0b1c5fc7058e08c4ddac6b538093159bfd8b5fbe9fcb9eed2a1af4cc70) |
-| Proof 1 — transfer: propose → 3 sealed votes (For, For, Against) → reveal → finalize → execute → claim | propose [`0x353ef369…`](https://explorer.arc.io/tx/0x353ef369ff80270563033490020657e81a2eb1154fc369784ae4470e89f13467) · votes [`0xf0f54f3b…`](https://explorer.arc.io/tx/0xf0f54f3ba7f6cefa321fae6004aec8ac70279569cb57495eebe900f08929a914) [`0x695a8ba1…`](https://explorer.arc.io/tx/0x695a8ba13d59a20b24b9f42b650c63b3726b18ba358d21c3870a5150c1ccad8e) [`0x9aa7f643…`](https://explorer.arc.io/tx/0x9aa7f643784e588175d66c8edcce8cc5d4e7b4ac1f32e298c9b4add62efa5627) · revealBatch [`0x66e70f35…`](https://explorer.arc.io/tx/0x66e70f35000463ec17d28acfa7d035b2ca3ab81af332f44a50026dc41b828320) (0.03 USDC reveal payment, claimed [`0x4c534dc5…`](https://explorer.arc.io/tx/0x4c534dc5d42fa2035cb1ed9018a2751ef0838929471fa94793f3ec5aacff1552)) · finalize `TBD` · execute `TBD` · claim `TBD` |
-| Proof 2 — membership: propose → 2 sealed votes, 1 abstains by not voting → reveal → finalize → execute | propose [`0x96991c2d…`](https://explorer.arc.io/tx/0x96991c2d06c38b299448c96a8e4ff8a412f037d44a7ea36adcbf52dde182e45a) · votes [`0x01886649…`](https://explorer.arc.io/tx/0x01886649dd11dc6a4a30d4d2c049d957ecee22ef0db476c4c6577a790a79f779) [`0xc32dc596…`](https://explorer.arc.io/tx/0xc32dc596c9172ec5959e94b2457bd65cd2fc99fda718142290fb678312a8aa43) · revealBatch [`0x781c14ee…`](https://explorer.arc.io/tx/0x781c14ee4a48f51c99fd3e161f9dafe2bc569b38812959b077fe486ccfb12319) · finalize `TBD` · execute `TBD` |
-| Proof 3 — negative: a proposal that fails quorum, and a `revealBatch` with one garbage item skipped | propose [`0x771c4edf…`](https://explorer.arc.io/tx/0x771c4edf0aeec984689bedf1cfb51801f69ffa0c8d16c4591caa0553ec4e8154) · vote [`0x516f2e82…`](https://explorer.arc.io/tx/0x516f2e824407ebf62e13034acd59150bd773dd39376da04652dbca93b4226391) · revealBatch [`0x49b4f6e0…`](https://explorer.arc.io/tx/0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2) (1 revealed, 1 `RevealSkipped`, no reveal payment below quorum) · finalize `TBD` |
+| Proof 1 — transfer: propose → 3 sealed votes (For, For, Against) → reveal → finalize → execute → claim | propose [`0x353ef369…`](https://explorer.arc.io/tx/0x353ef369ff80270563033490020657e81a2eb1154fc369784ae4470e89f13467) · votes [`0xf0f54f3b…`](https://explorer.arc.io/tx/0xf0f54f3ba7f6cefa321fae6004aec8ac70279569cb57495eebe900f08929a914) [`0x695a8ba1…`](https://explorer.arc.io/tx/0x695a8ba13d59a20b24b9f42b650c63b3726b18ba358d21c3870a5150c1ccad8e) [`0x9aa7f643…`](https://explorer.arc.io/tx/0x9aa7f643784e588175d66c8edcce8cc5d4e7b4ac1f32e298c9b4add62efa5627) · revealBatch [`0x66e70f35…`](https://explorer.arc.io/tx/0x66e70f35000463ec17d28acfa7d035b2ca3ab81af332f44a50026dc41b828320) (0.03 USDC reveal payment, claimed [`0x4c534dc5…`](https://explorer.arc.io/tx/0x4c534dc5d42fa2035cb1ed9018a2751ef0838929471fa94793f3ec5aacff1552)) · finalize [`0x8dca055e…`](https://explorer.arc.io/tx/0x8dca055ebe4b7f35307349d7d94c402756ff1553b9d67fe16c8993ebec27660f) (Passed, 2–1) · execute [`0xdfa967ad…`](https://explorer.arc.io/tx/0xdfa967add56dcb1be2673a90243019bcae1536251f2a164973cde67a300a2d46) · claim [`0x8abcfd37…`](https://explorer.arc.io/tx/0x8abcfd3775e7459e7135b82427f749250d8e7b1d524dd4cd2229f999188a6527) (1 USDC to WALLET_C) |
+| Proof 2 — membership: propose → 2 sealed votes, 1 abstains by not voting → reveal → finalize → execute | propose [`0x96991c2d…`](https://explorer.arc.io/tx/0x96991c2d06c38b299448c96a8e4ff8a412f037d44a7ea36adcbf52dde182e45a) · votes [`0x01886649…`](https://explorer.arc.io/tx/0x01886649dd11dc6a4a30d4d2c049d957ecee22ef0db476c4c6577a790a79f779) [`0xc32dc596…`](https://explorer.arc.io/tx/0xc32dc596c9172ec5959e94b2457bd65cd2fc99fda718142290fb678312a8aa43) · revealBatch [`0x781c14ee…`](https://explorer.arc.io/tx/0x781c14ee4a48f51c99fd3e161f9dafe2bc569b38812959b077fe486ccfb12319) · finalize [`0x0116d663…`](https://explorer.arc.io/tx/0x0116d663ca7cebb641fb2cb7be047859a637bc4c1c4f413997023370acf7ede4) (Passed) · execute [`0x7c97e2cd…`](https://explorer.arc.io/tx/0x7c97e2cd6f904392c6a78a5813214e5f30dd0d823d53424c1d18b51dc48b08ea) (`memberCount` 3 → 4) |
+| Proof 3 — negative: a proposal that fails quorum, and a `revealBatch` with one garbage item skipped | propose [`0x771c4edf…`](https://explorer.arc.io/tx/0x771c4edf0aeec984689bedf1cfb51801f69ffa0c8d16c4591caa0553ec4e8154) · vote [`0x516f2e82…`](https://explorer.arc.io/tx/0x516f2e824407ebf62e13034acd59150bd773dd39376da04652dbca93b4226391) · revealBatch [`0x49b4f6e0…`](https://explorer.arc.io/tx/0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2) (1 revealed, 1 `RevealSkipped`, no reveal payment below quorum) · finalize [`0xc473d686…`](https://explorer.arc.io/tx/0xc473d686c51498c8c35efd97ccb8ee4ffa788eb740a4859ec5076b7c9b714602) (Failed: quorum not met) |
 
 ## Docs
 

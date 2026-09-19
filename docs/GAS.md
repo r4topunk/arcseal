@@ -8,8 +8,9 @@
 > USDC is `MockUSDC` (6 decimals, blocklist), so token calls differ slightly from Arc's USDC proxy (see "Other measurements").
 > Cost column: Arc's 20 gwei floor, paid in USDC (1 gas = 0.00000002 USDC).
 > The Arc mainnet column is filled from the PRD 10.2 proof transactions (`cast receipt <hash> gasUsed`) on
-> SealedDAO `0x789f7689efb75a1696c5a25d5ae97ac2cf6a2c44`; the rows still `TBD` (finalize, execute) land after the
-> reveal window of the proofs ends on 2026-09-19 14:08 UTC. Also measured there: deploy 2,886,734 gas (0.0577 USDC),
+> SealedDAO `0x789f7689efb75a1696c5a25d5ae97ac2cf6a2c44` (2026-09-18/19). On mainnet `execute` TransferUSDC to a
+> first-time recipient cost 93,187, over the 60k target: at that moment nothing else was owed, so both
+> `claimable[target]` and `totalClaimable` went from zero to non-zero, and the token is Arc's real USDC. Also measured there: deploy 2,886,734 gas (0.0577 USDC),
 > `propose` 243,574 – 249,312, funding the treasury (plain USDC transfer) 48,950. Effective gas price was 20.0026 gwei.
 
 ## PRD 4.5 calls
@@ -23,10 +24,10 @@
 | `revealBatch`, 10 items, per item | ≤ 45,000 per item | 20,207 | 23,427 | 0.00047 | within (-21,573) | — |
 | `revealBatch`, 50 items, per item | ≤ 45,000 per item | 13,264 | 14,719 | 0.00029 | within (-30,281) | — |
 | `revealBatch`, 256 items, per item | ≤ 45,000 per item | 11,887 | 12,986 | 0.00026 | within (-32,014) | — |
-| `finalize` | ≤ 60,000 | 11,623 | 32,827 | 0.00066 | within (-27,173) | TBD |
-| `execute` TransferUSDC, first payout to the recipient | ≤ 60,000 | 49,559 | 70,763 | 0.00142 | **over** (+10,763) | TBD |
-| `execute` TransferUSDC, recipient with a pending claim | ≤ 60,000 | 32,459 | 53,663 | 0.00107 | within (-6,337) | TBD |
-| `execute` SetMember (add) | none | 45,735 | 66,939 | 0.00134 | n/a | TBD |
+| `finalize` | ≤ 60,000 | 11,623 | 32,827 | 0.00066 | within (-27,173) | 32,827 (proof 1) · 49,927 / 49,904 (proofs 2, 3) |
+| `execute` TransferUSDC, first payout to the recipient | ≤ 60,000 | 49,559 | 70,763 | 0.00142 | **over** (+10,763) | **93,187** (proof 1: `claimable[target]` and `totalClaimable` both 0 → non-zero, real USDC) |
+| `execute` TransferUSDC, recipient with a pending claim | ≤ 60,000 | 32,459 | 53,663 | 0.00107 | within (-6,337) | — |
+| `execute` SetMember (add) | none | 45,735 | 66,939 | 0.00134 | n/a | 66,939 (proof 2) |
 | `claim` (claimer already holds USDC, as every Arc sender does) | ≤ 55,000 | 33,074 | 49,338 | 0.00099 | within (-5,662) | 52,086 (bounty claim, WALLET_B) |
 
 Whole `revealBatch` calls: 3 items 145,902 (demo DAO, For / For / Against; forge's 3-item scenario cycles

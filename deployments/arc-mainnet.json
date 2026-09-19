@@ -43,9 +43,9 @@
       "0x9aa7f643784e588175d66c8edcce8cc5d4e7b4ac1f32e298c9b4add62efa5627"
     ],
     "transferRevealBatch": "0x66e70f35000463ec17d28acfa7d035b2ca3ab81af332f44a50026dc41b828320",
-    "transferFinalize": null,
-    "transferExecute": null,
-    "transferClaim": null,
+    "transferFinalize": "0x8dca055ebe4b7f35307349d7d94c402756ff1553b9d67fe16c8993ebec27660f",
+    "transferExecute": "0xdfa967add56dcb1be2673a90243019bcae1536251f2a164973cde67a300a2d46",
+    "transferClaim": "0x8abcfd3775e7459e7135b82427f749250d8e7b1d524dd4cd2229f999188a6527",
     "transferBountyClaim": "0x4c534dc5d42fa2035cb1ed9018a2751ef0838929471fa94793f3ec5aacff1552",
     "addMemberPropose": "0x96991c2d06c38b299448c96a8e4ff8a412f037d44a7ea36adcbf52dde182e45a",
     "addMemberVotes": [
@@ -53,11 +53,11 @@
       "0xc32dc596c9172ec5959e94b2457bd65cd2fc99fda718142290fb678312a8aa43"
     ],
     "addMemberRevealBatch": "0x781c14ee4a48f51c99fd3e161f9dafe2bc569b38812959b077fe486ccfb12319",
-    "addMemberFinalize": null,
-    "addMemberExecute": null,
+    "addMemberFinalize": "0x0116d663ca7cebb641fb2cb7be047859a637bc4c1c4f413997023370acf7ede4",
+    "addMemberExecute": "0x7c97e2cd6f904392c6a78a5813214e5f30dd0d823d53424c1d18b51dc48b08ea",
     "quorumFailPropose": "0x771c4edf0aeec984689bedf1cfb51801f69ffa0c8d16c4591caa0553ec4e8154",
     "quorumFailVote": "0x516f2e824407ebf62e13034acd59150bd773dd39376da04652dbca93b4226391",
-    "quorumFailFinalize": null,
+    "quorumFailFinalize": "0xc473d686c51498c8c35efd97ccb8ee4ffa788eb740a4859ec5076b7c9b714602",
     "revealBatchWithSkippedItem": "0x49b4f6e0f582c8cb4d901b771af6e1a9e830fa8b7cc4d53a5cc5153bc13dafd2"
   }
 }
